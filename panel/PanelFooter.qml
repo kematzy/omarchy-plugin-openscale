@@ -12,7 +12,7 @@ RowLayout {
   // same monospace family as everything else in the shell.
   property var links: [
     { icon: "\uF09D", label: "Credits", url: "https://openscale.so/credits" },
-    { icon: "\uF120", label: "Console", url: "https://openscale.so/login" },
+    { icon: "\uF120", label: "Console", url: "https://app.openscale.so/app" },
     { icon: "\uF02D", label: "Docs", url: "https://openscale.so/docs" }
   ]
 
