@@ -27,6 +27,7 @@ Panel {
 
   // Pushed in by BarWidget.qml. Becomes the shared service value later.
   property string creditText: "$0.00"
+  property bool lowCredit: false
 
   // ---- Theme ---------------------------------------------------------------
   readonly property color contentForeground: bar ? bar.foreground : Commons.Color.foreground
@@ -74,9 +75,9 @@ Panel {
         PanelHeader {
           Layout.fillWidth: true
           creditText: root.creditText
+          lowCredit: root.lowCredit
           fontFamily: root.contentFontFamily
           foreground: root.contentForeground
-          mutedForeground: root.mutedForeground
         }
 
         // ---- Tab bar -------------------------------------------------------

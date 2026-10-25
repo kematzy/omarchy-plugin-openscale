@@ -15,7 +15,21 @@ BarWidget {
 
   // TODO: real balance from the OpenScale API. Until Service.qml exists this
   // is a placeholder, and it is pushed into the panel on load.
-  property string creditText: "$0.00"
+  property string creditText: "$999.99"
+
+  // Low-credit threshold in dollars. Hardcoded until the manifest exposes it
+  // as a setting; one owner here keeps the bar button and the panel header
+  // from disagreeing about when the figure turns urgent.
+  readonly property real lowBalance: 3
+
+  // The figure as a number, parsed from the placeholder text. `-1` means
+  // unknown, which never counts as low. Replaced by the service value when
+  // the data layer lands.
+  readonly property real creditValue: {
+    var parsed = parseFloat(String(creditText).replace(/[^0-9.\-]/g, ""))
+    return isFinite(parsed) ? parsed : -1
+  }
+  readonly property bool lowCredit: creditValue >= 0 && creditValue <= lowBalance
 
   // ---- Panel lifecycle contract -------------------------------------------
   // Bar.findPanelWidget expects open/close/opened on this root, and the popout
@@ -55,6 +69,7 @@ BarWidget {
     if ("anchorItem" in target) target.anchorItem = button
     if ("hostWidget" in target) target.hostWidget = root
     if ("creditText" in target) target.creditText = root.creditText
+    if ("lowCredit" in target) target.lowCredit = root.lowCredit
   }
 
   implicitWidth: button.implicitWidth
@@ -86,6 +101,8 @@ BarWidget {
     text: root.creditText
     labelVisible: false
     fixedWidth: content.implicitWidth + button.scaledHorizontalMargin * 2
+    // Drives the label colour through WidgetButton's own urgent affordance.
+    active: root.lowCredit
     tooltipText: "OpenScale — usage, models and settings"
     horizontalMargin: 9
     verticalPadding: 8
@@ -112,7 +129,7 @@ BarWidget {
 
       Text {
         text: root.creditText
-        color: button.foreground
+        color: button.active ? button.activeColor : button.foreground
         font.family: button.fontFamily
         font.pixelSize: button.fontSize
         renderType: Text.NativeRendering
