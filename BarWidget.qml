@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Layouts
+import qs.Commons
 import qs.Ui
 
 // Bar button + host for the OpenScale panel.
@@ -78,13 +80,44 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
+    // The label is off because WidgetButton can only draw text centred on its
+    // own; the brand mark and the amount are composed here instead, and
+    // `fixedWidth` lets the button size itself to that row.
     text: root.creditText
+    labelVisible: false
+    fixedWidth: content.implicitWidth + button.scaledHorizontalMargin * 2
     tooltipText: "OpenScale — usage, models and settings"
     horizontalMargin: 9
     verticalPadding: 8
 
     onPressed: function(buttonCode) {
       if (buttonCode === Qt.LeftButton) root.togglePanel()
+    }
+
+    RowLayout {
+      id: content
+      anchors.centerIn: parent
+      spacing: Style.space(5)
+
+      Image {
+        source: Qt.resolvedUrl("assets/openscale.svg")
+        // 2x the painted size so the mark stays crisp on HiDPI outputs.
+        sourceSize.width: Math.round(Style.space(14) * 2)
+        sourceSize.height: Math.round(Style.space(14) * 2)
+        fillMode: Image.PreserveAspectFit
+        Layout.preferredWidth: Style.space(14)
+        Layout.preferredHeight: Style.space(14)
+        Layout.alignment: Qt.AlignVCenter
+      }
+
+      Text {
+        text: root.creditText
+        color: button.foreground
+        font.family: button.fontFamily
+        font.pixelSize: button.fontSize
+        renderType: Text.NativeRendering
+        Layout.alignment: Qt.AlignVCenter
+      }
     }
   }
 }
