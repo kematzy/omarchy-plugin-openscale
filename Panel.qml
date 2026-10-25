@@ -25,9 +25,16 @@ Panel {
   // nested panel, so every bar-facing identity resolves to the host widget.
   readonly property var barIdentity: hostWidget || root
 
-  // Pushed in by BarWidget.qml. Becomes the shared service value later.
-  property string creditText: "$0.00"
-  property bool lowCredit: false
+  // Read live from the host widget rather than copied at injection time: the
+  // balance changes on the service's own schedule, so the panel has to follow
+  // it instead of holding the value it was handed on load.
+  readonly property string creditText: hostWidget ? hostWidget.creditText : "—"
+  readonly property bool lowCredit: hostWidget ? hostWidget.lowCredit === true : false
+
+  // Opening the popup — by click or by `omarchy-shell shell summon` — asks the
+  // host for a fresh balance. The host decides whether it is stale enough.
+  onOpenedChanged: if (opened && hostWidget && typeof hostWidget.refreshOnOpen === "function")
+    hostWidget.refreshOnOpen()
 
   // ---- Theme ---------------------------------------------------------------
   readonly property color contentForeground: bar ? bar.foreground : Commons.Color.foreground

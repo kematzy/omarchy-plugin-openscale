@@ -13,23 +13,23 @@ BarWidget {
   id: root
   moduleName: "io.github.kematzy.openscale"
 
-  // TODO: real balance from the OpenScale API. Until Service.qml exists this
-  // is a placeholder, and it is pushed into the panel on load.
-  property string creditText: "$999.99"
+  // Real balance, read from the `osc` CLI by Service.qml below. One source for
+  // the bar button, the tooltip and the panel.
+  readonly property string creditText: service.creditText
+  readonly property real balanceUsd: service.balanceUsd
 
   // Low-credit threshold in dollars. Hardcoded until the manifest exposes it
   // as a setting; one owner here keeps the bar button and the panel header
   // from disagreeing about when the figure turns urgent.
   readonly property real lowBalance: 3
+  readonly property bool lowCredit: balanceUsd >= 0 && balanceUsd <= lowBalance
+  readonly property bool balanceRefreshing: service.refreshing
 
-  // The figure as a number, parsed from the placeholder text. `-1` means
-  // unknown, which never counts as low. Replaced by the service value when
-  // the data layer lands.
-  readonly property real creditValue: {
-    var parsed = parseFloat(String(creditText).replace(/[^0-9.\-]/g, ""))
-    return isFinite(parsed) ? parsed : -1
+  // Called by Panel.qml when the popup opens: fetches the balance unless the
+  // last good one is still fresh, so repeated open/close does not poll.
+  function refreshOnOpen() {
+    service.refreshIfStale()
   }
-  readonly property bool lowCredit: creditValue >= 0 && creditValue <= lowBalance
 
   // ---- Panel lifecycle contract -------------------------------------------
   // Bar.findPanelWidget expects open/close/opened on this root, and the popout
@@ -68,8 +68,6 @@ BarWidget {
     if ("settings" in target) target.settings = root.settings
     if ("anchorItem" in target) target.anchorItem = button
     if ("hostWidget" in target) target.hostWidget = root
-    if ("creditText" in target) target.creditText = root.creditText
-    if ("lowCredit" in target) target.lowCredit = root.lowCredit
   }
 
   implicitWidth: button.implicitWidth
@@ -77,6 +75,13 @@ BarWidget {
 
   onBarChanged: injectPanel()
   onSettingsChanged: injectPanel()
+
+  Service {
+    id: service
+    // Interval comes from this widget's inline shell.json entry, so changing
+    // the setting takes effect without touching the code.
+    settings: root.settings
+  }
 
   Loader {
     id: panelLoader
@@ -103,7 +108,8 @@ BarWidget {
     fixedWidth: content.implicitWidth + button.scaledHorizontalMargin * 2
     // Drives the label colour through WidgetButton's own urgent affordance.
     active: root.lowCredit
-    tooltipText: "OpenScale — usage, models and settings"
+    tooltipText: service.error !== "" ? "OpenScale — " + service.error
+      : "OpenScale — usage, models and settings"
     horizontalMargin: 9
     verticalPadding: 8
 

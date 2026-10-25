@@ -3,7 +3,7 @@
   "id": "io.github.kematzy.openscale",
   "name": "OpenScale",
   "version": "0.1.0",
-  "author": "kzen",
+  "author": "kematzy",
   "license": "MIT",
   "description": "OpenScale credit balance in the bar, with a panel for usage, models and settings.",
   "kinds": ["bar-widget"],
@@ -16,6 +16,32 @@
     "category": "AI",
     "aliases": ["openscale", "credits"],
     "allowMultiple": false,
-    "defaultSection": "right"
+    "defaultSection": "right",
+    "defaults": {
+      "refreshIntervalSec": 300,
+      "openRefreshGapSec": 60
+    },
+    "schema": [
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Background refresh (seconds)",
+        "min": 30,
+        "max": 3600,
+        "step": 30,
+        "defaultValue": 300,
+        "description": "How often the balance is read from the osc CLI while the panel is closed. 30 seconds minimum, for development."
+      },
+      {
+        "key": "openRefreshGapSec",
+        "type": "integer",
+        "label": "Open-refresh minimum gap (seconds)",
+        "min": 0,
+        "max": 3600,
+        "step": 10,
+        "defaultValue": 60,
+        "description": "Opening the panel refreshes the balance unless the last good fetch is younger than this. 0 refreshes on every open."
+      }
+    ]
   }
 }
