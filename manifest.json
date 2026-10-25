@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.kematzy.openscale",
+  "name": "OpenScale",
+  "version": "0.1.0",
+  "author": "kzen",
+  "license": "MIT",
+  "description": "OpenScale credit balance in the bar, with a panel for usage, models and settings.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "OpenScale",
+    "description": "Credit balance remaining. Click for usage, models and settings.",
+    "category": "AI",
+    "aliases": ["openscale", "credits"],
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
