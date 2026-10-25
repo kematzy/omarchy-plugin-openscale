@@ -19,6 +19,13 @@ RowLayout {
   // Set by the host when the credit is at or below its low-balance threshold,
   // so the threshold itself has one owner and this file stays presentational.
   property bool lowCredit: false
+  // Set by the host while a balance fetch is in flight.
+  property bool busy: false
+  // The fetch takes ~300 ms, which is over before the eye registers the
+  // rotation, so the spinner would read as a rendering artefact. Holding it for
+  // half a second after the figure lands makes the refresh legible.
+  readonly property bool spinning: busy || spinnerTail.running
+
   property url logoSrc: Qt.resolvedUrl("../assets/openscale-logo.svg")
   // Painted height of the lockup; the width follows the asset's aspect ratio.
   property real logoHeight: Style.space(30)
@@ -49,6 +56,18 @@ RowLayout {
 
   spacing: Style.space(9)
   implicitHeight: Math.max(root.logoHeight, balanceBox.implicitHeight)
+
+  onBusyChanged: {
+    if (busy) spinnerTail.stop()
+    else spinnerTail.restart()
+  }
+
+  // Trailing spin, timed from the moment `busy` clears.
+  Timer {
+    id: spinnerTail
+    interval: 500
+    repeat: false
+  }
 
   // Widest figure the header has to show. Reserving its width keeps the block
   // — and the caption under it — from reflowing between $0.00 and $999.99.
@@ -106,22 +125,50 @@ RowLayout {
       // label under the figure, not as a second line of it.
       spacing: Style.space(4)
 
-      Text {
-        id: amount
+      RowLayout {
         Layout.alignment: Qt.AlignRight
-        // Never narrower than the widest figure. The extra width is on the
-        // left: horizontalAlignment keeps the figure's own right edge on the
-        // column edge, in line with the caption beneath it.
-        Layout.minimumWidth: amountMetrics.advanceWidth
-        horizontalAlignment: Text.AlignRight
-        text: root.creditText
-        color: root.amountColor
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.display
-        font.bold: true
+        spacing: Style.space(6)
 
-        Behavior on color {
-          ColorAnimation { duration: 160 }
+        // Spinner sits in its own text field ahead of the figure, and only
+        // while a fetch is in flight. A hidden layout item takes no space, so
+        // the figure's right edge stays pinned while it appears and goes.
+        Text {
+          id: spinner
+          Layout.alignment: Qt.AlignVCenter
+          visible: root.spinning
+          text: "\uF021"
+          textFormat: Text.PlainText
+          color: root.captionColor
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.title
+
+          RotationAnimation on rotation {
+            running: root.spinning
+            loops: Animation.Infinite
+            from: 0
+            to: 360
+            duration: 900
+            onRunningChanged: if (!running) spinner.rotation = 0
+          }
+        }
+
+        Text {
+          id: amount
+          Layout.alignment: Qt.AlignVCenter
+          // Never narrower than the widest figure. The extra width is on the
+          // left: horizontalAlignment keeps the figure's own right edge on the
+          // column edge, in line with the caption beneath it.
+          Layout.minimumWidth: amountMetrics.advanceWidth
+          horizontalAlignment: Text.AlignRight
+          text: root.creditText
+          color: root.amountColor
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.display
+          font.bold: true
+
+          Behavior on color {
+            ColorAnimation { duration: 160 }
+          }
         }
       }
 

@@ -30,6 +30,9 @@ Panel {
   // it instead of holding the value it was handed on load.
   readonly property string creditText: hostWidget ? hostWidget.creditText : "—"
   readonly property bool lowCredit: hostWidget ? hostWidget.lowCredit === true : false
+  readonly property bool balanceRefreshing: hostWidget
+    ? hostWidget.balanceRefreshing === true
+    : false
 
   // Opening the popup — by click or by `omarchy-shell shell summon` — asks the
   // host for a fresh balance. The host decides whether it is stale enough.
@@ -83,6 +86,7 @@ Panel {
           Layout.fillWidth: true
           creditText: root.creditText
           lowCredit: root.lowCredit
+          busy: root.balanceRefreshing
           fontFamily: root.contentFontFamily
           foreground: root.contentForeground
         }
