@@ -14,7 +14,7 @@ import "panel"
 // and the arrow keys.
 Panel {
   id: root
-  moduleName: "local.openscale"
+  moduleName: "io.github.kematzy.openscale"
   manageIpc: false
 
   // ---- Injected by BarWidget.qml ------------------------------------------

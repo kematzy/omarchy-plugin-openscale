@@ -9,7 +9,7 @@ import qs.Ui
 // with a popup: one plugin, one kind ("bar-widget"), no separate panel kind.
 BarWidget {
   id: root
-  moduleName: "local.openscale"
+  moduleName: "io.github.kematzy.openscale"
 
   // TODO: real balance from the OpenScale API. Until Service.qml exists this
   // is a placeholder, and it is pushed into the panel on load.
