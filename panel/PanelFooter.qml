@@ -2,10 +2,12 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Commons as Commons
+import qs.Ui
 
-// Panel footer, shown below the tabs on every tab: three shortcut buttons that
-// open the matching page on openscale.so.
-RowLayout {
+// Panel footer, shown below the tabs on every tab: a full-width rule closing
+// the panel body, then three shortcut buttons that open the matching page on
+// openscale.so.
+ColumnLayout {
   id: root
 
   // { icon, label, url } — icon is a Nerd Font glyph, so it renders in the
@@ -20,52 +22,64 @@ RowLayout {
   property color foreground: Commons.Color.foreground
   property color accent: Commons.Color.accent
 
-  spacing: Style.space(6)
-  implicitHeight: Style.space(34)
+  spacing: Style.space(8)
 
-  Repeater {
-    model: root.links
+  PanelSeparator {
+    Layout.fillWidth: true
+    foreground: root.foreground
+  }
 
-    delegate: Rectangle {
-      id: link
-      required property var modelData
+  RowLayout {
+    id: buttons
 
-      Layout.fillWidth: true
-      implicitHeight: Style.space(32)
-      radius: Style.cornerRadius
-      color: hover.hovered ? Util.alpha(root.accent, 0.12) : "transparent"
+    Layout.fillWidth: true
+    spacing: Style.space(6)
+    implicitHeight: Style.space(34)
 
-      HoverHandler {
-        id: hover
-      }
+    Repeater {
+      model: root.links
 
-      MouseArea {
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        // execArgv keeps the URL a literal argv entry (no shell re-parsing).
-        onClicked: Util.execArgv(["xdg-open", link.modelData.url])
-      }
+      delegate: Rectangle {
+        id: link
+        required property var modelData
 
-      RowLayout {
-        anchors.centerIn: parent
-        spacing: Style.space(7)
+        Layout.fillWidth: true
+        implicitHeight: Style.space(32)
+        // Square buttons, no radius, matching the tab strip.
+        color: hover.hovered ? Util.alpha(root.accent, 0.12) : "transparent"
 
-        Text {
-          text: link.modelData.icon
-          color: hover.hovered ? root.accent : root.foreground
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.body
-          Layout.alignment: Qt.AlignVCenter
+        HoverHandler {
+          id: hover
         }
 
-        Text {
-          text: link.modelData.label
-          color: hover.hovered ? root.accent : root.foreground
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.bodySmall
-          font.capitalization: Font.AllUppercase
-          font.letterSpacing: 0.6
-          Layout.alignment: Qt.AlignVCenter
+        MouseArea {
+          anchors.fill: parent
+          cursorShape: Qt.PointingHandCursor
+          // execArgv keeps the URL a literal argv entry (no shell re-parsing).
+          onClicked: Util.execArgv(["xdg-open", link.modelData.url])
+        }
+
+        RowLayout {
+          anchors.centerIn: parent
+          spacing: Style.space(7)
+
+          Text {
+            text: link.modelData.icon
+            color: hover.hovered ? root.accent : root.foreground
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.body
+            Layout.alignment: Qt.AlignVCenter
+          }
+
+          Text {
+            text: link.modelData.label
+            color: hover.hovered ? root.accent : root.foreground
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.bodySmall
+            font.capitalization: Font.AllUppercase
+            font.letterSpacing: 0.6
+            Layout.alignment: Qt.AlignVCenter
+          }
         }
       }
     }
