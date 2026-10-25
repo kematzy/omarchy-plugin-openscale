@@ -92,29 +92,52 @@ Panel {
         }
 
         // ---- Tab bar -------------------------------------------------------
-        TabBar {
-          id: tabBar
+        // The rule sits directly on the tab strip, so the strip reads as one
+        // block with a top border. The extra room above it is what separates
+        // the tabs from the balance.
+        ColumnLayout {
           Layout.fillWidth: true
-          currentIndex: root.tabIndex
-          onCurrentIndexChanged: root.tabIndex = currentIndex
+          Layout.topMargin: Style.space(10)
+          spacing: 0
 
-          Tab {
-            text: "Usage"
-            fontFamily: root.contentFontFamily
+          PanelSeparator {
+            Layout.fillWidth: true
             foreground: root.contentForeground
-            accent: root.accentColor
           }
-          Tab {
-            text: "Models"
-            fontFamily: root.contentFontFamily
-            foreground: root.contentForeground
-            accent: root.accentColor
-          }
-          Tab {
-            text: "Settings"
-            fontFamily: root.contentFontFamily
-            foreground: root.contentForeground
-            accent: root.accentColor
+
+          TabBar {
+            id: tabBar
+            Layout.fillWidth: true
+            // The Controls style paints a filled band behind the tabs; its
+            // palette window colour differs from the popup surface, so the
+            // band's bottom edge read as a second rule under the strip.
+            background: null
+            currentIndex: root.tabIndex
+            onCurrentIndexChanged: root.tabIndex = currentIndex
+
+            Tab {
+              text: "Usage"
+              // Design preview: the glyph spins until the Usage datasets are
+              // wired to this flag. Then it becomes the real loading state.
+              busy: true
+              fontFamily: root.contentFontFamily
+              foreground: root.contentForeground
+              accent: root.accentColor
+            }
+            Tab {
+              text: "Models"
+              // Design preview, same as Usage above.
+              busy: true
+              fontFamily: root.contentFontFamily
+              foreground: root.contentForeground
+              accent: root.accentColor
+            }
+            Tab {
+              text: "Settings"
+              fontFamily: root.contentFontFamily
+              foreground: root.contentForeground
+              accent: root.accentColor
+            }
           }
         }
 
