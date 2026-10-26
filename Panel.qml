@@ -35,9 +35,22 @@ Panel {
     : false
 
   // Opening the popup — by click or by `omarchy-shell shell summon` — asks the
-  // host for a fresh balance. The host decides whether it is stale enough.
-  onOpenedChanged: if (opened && hostWidget && typeof hostWidget.refreshOnOpen === "function")
-    hostWidget.refreshOnOpen()
+  // host for a fresh balance and refreshes whichever data tab is showing. The
+  // host decides whether the balance is stale enough; the tab only fetches if
+  // it is the current one.
+  readonly property int modelsTabIndex: 1
+
+  onOpenedChanged: if (opened) root.refreshOnOpen()
+  onTabIndexChanged: root.refreshActiveTab()
+
+  function refreshOnOpen() {
+    if (hostWidget && typeof hostWidget.refreshOnOpen === "function") hostWidget.refreshOnOpen()
+    root.refreshActiveTab()
+  }
+
+  function refreshActiveTab() {
+    if (tabIndex === root.modelsTabIndex) modelsTab.refresh()
+  }
 
   // ---- Theme ---------------------------------------------------------------
   readonly property color contentForeground: bar ? bar.foreground : Commons.Color.foreground
@@ -117,17 +130,16 @@ Panel {
 
             Tab {
               text: "Usage"
-              // Design preview: the glyph spins until the Usage datasets are
-              // wired to this flag. Then it becomes the real loading state.
-              busy: true
+              // The Usage datasets are not wired yet, so there is nothing to
+              // spin for. This becomes its loading flag with that work.
               fontFamily: root.contentFontFamily
               foreground: root.contentForeground
               accent: root.accentColor
             }
             Tab {
               text: "Models"
-              // Design preview, same as Usage above.
-              busy: true
+              // Spins only while the catalogue is actually being fetched.
+              busy: modelsTab.loading
               fontFamily: root.contentFontFamily
               foreground: root.contentForeground
               accent: root.accentColor
@@ -153,6 +165,7 @@ Panel {
             mutedForeground: root.mutedForeground
           }
           ModelsTab {
+            id: modelsTab
             fontFamily: root.contentFontFamily
             foreground: root.contentForeground
             mutedForeground: root.mutedForeground

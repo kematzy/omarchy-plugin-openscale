@@ -6,8 +6,8 @@ the status bar, with a panel for usage, models and settings.
 - **Plugin id:** `io.github.kematzy.openscale`
 - **Kind:** `bar-widget` (one plugin; the popup is part of the widget, not a
   separate `panel` plugin)
-- **Status:** working credit balance, read from the `osc` CLI. Usage, models and
-  settings tabs are still placeholders
+- **Status:** working credit balance and model catalogue, both read from the
+  `osc` CLI. Usage and settings tabs are still placeholders
 
 ## Layout
 
@@ -20,7 +20,9 @@ the status bar, with a panel for usage, models and settings.
 | `panel/PanelHeader.qml` | Brand lockup on the left, credit balance over its caption on the right (every tab) |
 | `panel/Tab.qml` | One tab button: theme-token pill, uppercase label |
 | `panel/PanelFooter.qml` | Three shortcut buttons that open pages on openscale.so (every tab) |
-| `panel/UsageTab.qml`, `panel/ModelsTab.qml`, `panel/SettingsTab.qml` | Tab bodies — placeholders for now |
+| `panel/ModelsTab.qml` | The catalogue: one two-line block per model, cheapest input first, read through `models.sh` |
+| `models.sh` | Reads and refreshes the on-disk catalogue cache; the only write path, since QML cannot write files |
+| `panel/UsageTab.qml`, `panel/SettingsTab.qml` | Tab bodies — placeholders for now |
 | `assets/openscale.svg` | Bar button mark |
 | `assets/openscale-logo.svg` | Header lockup: mark + wordmark in one asset |
 
@@ -70,8 +72,21 @@ poll keeps the last good figure on screen and puts the reason in the bar tooltip
 an unknown balance is shown as `—`, never `$0.00`. At or below `$3.00` the figure
 turns urgent in both the bar and the header.
 
-The usage windows, the models cache and the missing-CLI error screen are not
-built yet.
+### Models
+
+The catalogue is cached on disk so the tab is populated the moment the panel
+opens, and refreshed only when the tab is shown:
+
+- cache: `${XDG_CACHE_HOME:-~/.cache}/omarchy/openscale/models.json`, holding
+  `{"fetchedAt": <epoch seconds>, "models": [...]}`
+- `models.sh --read` prints the cached envelope (`{}` when there is none);
+  `models.sh --refresh` runs `osc models --json`, replaces the cache atomically
+  and prints the fresh envelope. Both always exit 0 with JSON, so a failure is a
+  state the tab renders rather than an error it swallows
+- the cache holds the public catalogue only — ids, limits, list prices. No
+  credential or account data goes near it
+
+The usage windows and the missing-CLI error screen are not built yet.
 
 ## Development
 
@@ -130,9 +145,12 @@ follows the active Omarchy theme.
 
 ## Known gaps
 
-- **Usage, models and settings tabs** are placeholders. `osc usage` and
-  `osc models` supply the data for the first two; the refresh interval is
-  already a manifest setting, the low-balance threshold is not yet.
+- **Usage and settings tabs** are placeholders. `osc usage --today|--7d|--30d`
+  supplies the data for the first; the balance refresh interval is already a
+  manifest setting, the low-balance threshold is not yet.
+- **Models refresh** happens on every visit to the tab. Once the usage tab
+  exists, the plan is to floor that with the same `openRefreshGapSec` rule the
+  balance uses.
 - **Console link** points at `https://openscale.so/login`; there is no
   `/console` page. Credits → `/credits`, Docs → `/docs` are confirmed live.
 - Tabs currently stretch to equal width (segmented-control look).
