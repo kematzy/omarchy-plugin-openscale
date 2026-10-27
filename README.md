@@ -26,6 +26,11 @@ to paste, no token to store, and nothing to keep in sync.
   off — and immediately when you open the panel, if the last read is older than a
   minute.
 
+![The bar widget with its balance in red, at or below the threshold](.assets/low-balance-notification.png)
+
+*Once the balance reaches your threshold the figure turns urgent, here and in
+the panel header, so a low balance is hard to miss.*
+
 ### Spend tab
 
 The money, across four windows that answer different questions:
