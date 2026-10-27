@@ -65,3 +65,57 @@ function stamp(seconds) {
 function pad(value) {
   return (value < 10 ? "0" : "") + value
 }
+
+// Turns whatever a CLI printed on failure into one readable line.
+//
+// `osc` reports errors as JSON — {"error": {"code", "exit", "message"}} — so
+// putting stderr straight into the UI dumps a document into a one-line footer.
+// A missing sign-in is also the one failure with a fix worth naming, and it is
+// worth naming the same way everywhere.
+function errorText(raw, fallback) {
+  var text = String(raw === undefined || raw === null ? "" : raw)
+    .replace(/\u001b\[[0-9;]*[A-Za-z]/g, "")
+    .trim()
+
+  var message = ""
+  var code = ""
+  if (text.charAt(0) === "{") {
+    try {
+      var parsed = JSON.parse(text)
+      var err = parsed.error
+      if (err && typeof err === "object") {
+        message = String(err.message || "")
+        code = String(err.code || "")
+      } else if (typeof err === "string") {
+        message = err
+      } else if (parsed.message) {
+        message = String(parsed.message)
+      }
+    } catch (e) {
+      message = ""
+    }
+  }
+
+  if (code === "unauthorized" || /not signed in|unauthorized/i.test(message)) {
+    return "Not signed in — run `osc login`"
+  }
+
+  if (message === "") {
+    // Not JSON, or JSON without a message: the first line worth reading.
+    var lines = text.split("\n")
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].trim() !== "") {
+        message = lines[i].trim()
+        break
+      }
+    }
+  }
+
+  if (message === "") return fallback || "OpenScale did not answer"
+  return shorten(message, 140)
+}
+
+function shorten(text, limit) {
+  if (text.length <= limit) return text
+  return text.slice(0, limit - 1).replace(/[ ,;:.]+$/, "") + "…"
+}

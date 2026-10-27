@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import "Format.js" as Format
 
 // Reads the OpenScale account balance from the `osc` CLI and holds it for the
 // bar button and the panel.
@@ -98,12 +99,12 @@ Item {
     lastSuccessAt = Date.now()
   }
 
-  function exitMessage(exitCode, stderrText) {
+  function exitMessage(exitCode, outputText) {
     // The CLI's documented exit codes: 0 ok, 1 error, 2 usage, 3 sign-in
-    // needed, 4 out of credit, 5 limit reached. Only 3 has a fix worth naming.
+    // needed, 4 out of credit, 5 limit reached. Only 3 has a fix worth naming,
+    // and it is authoritative whether or not the CLI explained itself.
     if (exitCode === 3) return "Not signed in — run `osc login`"
-    var message = String(stderrText || "").trim()
-    return message !== "" ? message : "osc balance exited with code " + exitCode
+    return Format.errorText(outputText, "osc balance exited with code " + exitCode)
   }
 
   Timer {
@@ -136,7 +137,9 @@ Item {
         return
       }
       root.ok = false
-      root.error = root.exitMessage(exitCode, procErr.text)
+      // stderr normally carries the reason; the CLI sometimes reports on stdout.
+      root.error = root.exitMessage(exitCode,
+        String(procErr.text || "").trim() !== "" ? procErr.text : procOut.text)
     }
   }
 }

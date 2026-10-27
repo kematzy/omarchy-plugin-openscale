@@ -11,6 +11,9 @@ import qs.Commons as Commons
 // separate wordmark text. The SVG is white-on-transparent, so it is recoloured
 // here instead of being painted as-is: white would glare on a dark theme and
 // disappear on a light one.
+//
+// The lockup is also a link to openscale.so: it is the one "where does this come
+// from" affordance in the panel, and it brightens on hover so it reads as one.
 RowLayout {
   id: root
 
@@ -83,6 +86,19 @@ RowLayout {
     Layout.preferredHeight: root.logoHeight
     Layout.alignment: Qt.AlignVCenter
 
+    HoverHandler {
+      id: logoHover
+    }
+
+    // Left click only, so a stray right or middle click does not open a browser.
+    // execArgv keeps the URL a literal argv entry: no shell re-parsing.
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.LeftButton
+      cursorShape: Qt.PointingHandCursor
+      onClicked: Util.execArgv(["xdg-open", "https://openscale.so"])
+    }
+
     Image {
       id: logo
       anchors.fill: parent
@@ -101,7 +117,8 @@ RowLayout {
       anchors.fill: parent
       source: logo
       colorization: 1.0
-      colorizationColor: root.logoColor
+      // Hover brings the lockup up to the figure's colour, so it reads as a link.
+      colorizationColor: logoHover.hovered ? root.foreground : root.logoColor
     }
   }
 

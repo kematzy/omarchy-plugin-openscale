@@ -27,7 +27,7 @@ omarchy-shell
          ├─ Service.qml ............... balance poller (osc balance)
          ├─ Usage.qml ................. usage loader (osc usage × 3)
          └─ Loader → Panel.qml ........ the popup (qs.Ui Panel + KeyboardPanel)
-             ├─ panel/PanelHeader.qml . brand lockup + balance
+             ├─ panel/PanelHeader.qml . brand lockup (links to openscale.so) + balance
              ├─ panel/Tab.qml ......... one tab button
              ├─ panel/SpendTab.qml .... four money windows + threshold editor
              ├─ panel/TokensTab.qml ... three windows of tokens + model shares
@@ -127,8 +127,11 @@ plugin shells out to it and never speaks HTTP itself.
   - `3` sign-in needed
   - `4` out of credit
   - `5` limit reached.
-- Departures from `0` become the `error` string shown in the tooltip or the tab footer;
-  `3` is turned into "Not signed in — run `osc login`".
+- Departures from `0` become the `error` string shown in the tooltip or the tab footer.
+  `osc` reports failures as JSON (`{"error": {"code", "exit", "message"}}`), so the raw text
+  is never shown: `Format.errorText()` — and `readable_error()` in `models.sh` — extracts
+  `.error.message`, strips ANSI, falls back to the first usable line and shortens anything
+  long. `3` always reads "Not signed in — run `osc login`".
 - Every `osc` invocation costs a process spawn plus one HTTPS round trip, ~300 ms measured.
   That is why reads are batched per tab and floored.
 

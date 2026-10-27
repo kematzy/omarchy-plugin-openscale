@@ -28,6 +28,24 @@ emit_empty() {
 
 command -v jq >/dev/null 2>&1 || emit_empty
 
+# One readable line from whatever the CLI printed. Its JSON errors carry the
+# useful sentence in .error.message; anything else gets flattened and trimmed.
+# The sign-in case is phrased once, the same way the QML side phrases it.
+readable_error() {
+  local raw=$1 code message
+  code=$(printf '%s' "$raw" | jq -r '.error.code // empty | strings' 2>/dev/null | head -1)
+  message=$(printf '%s' "$raw" | jq -r '(.error.message // .error // .message // empty) | strings' 2>/dev/null | head -1)
+  if [[ $code == unauthorized ]] || printf '%s' "$message $raw" | grep -qi "not signed in"; then
+    printf 'Not signed in — run `osc login`'
+    return
+  fi
+  if [[ -z $message ]]; then
+    message=$(printf '%s' "$raw" | tr '\n' ' ' \
+      | sed -e 's/\x1b\[[0-9;]*[A-Za-z]//g' -e 's/^[^:]*: line [0-9]*: //' -e 's/^ *//' -e 's/ *$//')
+  fi
+  printf '%s' "$message"
+}
+
 read_cache() {
   [[ -r $CACHE_FILE ]] || emit_empty
   # Rebuild only the two fields the tab uses, so a partial, older or foreign
@@ -42,10 +60,7 @@ refresh() {
   out=$(osc models --json 2>&1)
   status=$?
   if [[ $status -ne 0 ]]; then
-    # Strip the script's own "path: line N: " prefix that bash adds, so the tab
-    # shows the CLI's message rather than this file's internals.
-    jq -cn --arg message "$(printf '%s' "$out" | tr '\n' ' ' \
-      | sed -e 's/^[^:]*: line [0-9]*: //' -e 's/^ *//' -e 's/ *$//')" \
+    jq -cn --arg message "$(readable_error "$out")" \
       '{error: (if $message == "" then "osc models failed" else $message end)}'
     exit 0
   fi

@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import "Format.js" as Format
 
 // Loads the three usage windows from the `osc` CLI and holds them for the Spend
 // and Tokens tabs.
@@ -90,11 +91,15 @@ Item {
       waitForEnd: true
     }
     onExited: function(exitCode) {
-      var message = String(procErr.text || "").trim()
+      var stderrText = String(procErr.text || "").trim()
       if (exitCode === 0) {
         root.applyWindow(root._index, procOut.text)
+      } else if (exitCode === 3) {
+        root.error = "Not signed in — run `osc login`"
       } else {
-        root.error = message !== "" ? message : "osc usage exited with code " + exitCode
+        // stderr normally carries the reason; the CLI sometimes reports on stdout.
+        root.error = Format.errorText(stderrText !== "" ? procErr.text : procOut.text,
+          "osc usage exited with code " + exitCode)
       }
 
       // Keep going after a failed window: partial figures are still worth
