@@ -106,7 +106,7 @@ ColumnLayout {
       parsed = null
     }
     if (!parsed || typeof parsed !== "object") {
-      if (!fromCache) error = "Could not read the model catalogue"
+      if (!fromCache) error = "Could not read the cached model list"
       return
     }
     if (typeof parsed.error === "string" && parsed.error !== "") {
@@ -115,7 +115,7 @@ ColumnLayout {
     }
     if (!Array.isArray(parsed.models)) {
       // {} from --read is simply "no cache yet".
-      if (!fromCache) error = "osc models returned no catalogue"
+      if (!fromCache) error = "osc models returned no listing"
       return
     }
     if (fromCache) {

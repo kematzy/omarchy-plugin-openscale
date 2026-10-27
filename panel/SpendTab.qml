@@ -44,7 +44,7 @@ ColumnLayout {
 
   Text {
     Layout.fillWidth: true
-    text: "Usage: USD"
+    text: "Spending Overview (USD)"
     color: root.foreground
     font.family: root.fontFamily
     font.pixelSize: Style.font.title
@@ -92,7 +92,7 @@ ColumnLayout {
       spacing: Style.space(2)
 
       Text {
-        text: "Low balance alert"
+        text: "Set Low Balance"
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
@@ -100,7 +100,7 @@ ColumnLayout {
 
       Text {
         Layout.fillWidth: true
-        text: "The figure turns urgent at or below this amount, in the bar and the header."
+        text: "Set your own minimum credit remaining amount to remind you add more credits"
         color: Util.alpha(root.foreground, 0.75)
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption

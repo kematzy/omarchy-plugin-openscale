@@ -34,7 +34,7 @@ ColumnLayout {
 
   Text {
     Layout.fillWidth: true
-    text: "Usage: Tokens & Models"
+    text: "Tokens & Models Used"
     color: root.foreground
     font.family: root.fontFamily
     font.pixelSize: Style.font.title

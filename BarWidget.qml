@@ -146,7 +146,7 @@ BarWidget {
     // Drives the label colour through WidgetButton's own urgent affordance.
     active: root.lowCredit
     tooltipText: service.error !== "" ? "OpenScale — " + service.error
-      : "OpenScale — usage, models and settings"
+      : "OpenScale — spending, usage and models"
     horizontalMargin: 9
     verticalPadding: 8
 
