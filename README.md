@@ -35,6 +35,9 @@ or 30 days. It also shows token usage, which models were used and available mode
   <img src=".assets/tab-spend.png" alt="OpenScale plugin spend tab">
 </div>
 
+<br />
+<br />
+
 - Provides a quick overview of the rolling spending within:
   - the **Last 24 hours**
   - **Today** (_resets at midnight_)
@@ -50,6 +53,9 @@ or 30 days. It also shows token usage, which models were used and available mode
   <img src=".assets/tab-tokens.png" alt="OpenScale plugin tokens tab">
 </div>
 
+<br />
+<br />
+
 - Easy overview of requests and token usage for:
   - **Today**
   - the **Last 7 days**
@@ -63,6 +69,9 @@ or 30 days. It also shows token usage, which models were used and available mode
 <div align="center">
   <img src=".assets/tab-models.png" alt="OpenScale plugin models tab">
 </div>
+
+<br />
+<br />
 
 - Shows available models, sorted by input price, with details showing:
   - Context window
@@ -81,6 +90,9 @@ or 30 days. It also shows token usage, which models were used and available mode
   <img src=".assets/low-balance-notification.png" alt="OpenScale plugin low balance notification">
 </div>
 
+<br />
+<br />
+
 - Shown as red in the bar widget and panel header when your remaining balance is below your set limit.
 - The balance refreshes every 5 minutes by default, or when the panel is opened.
 
@@ -97,12 +109,10 @@ or 30 days. It also shows token usage, which models were used and available mode
 
 ## Quick Start
 
-To use the plugin you need to have **OpenScale CLI** installed and be signed in.
+To use the plugin you need to have **OpenScale CLI** installed and be signed in. See the
+[OpenScale Dashboard](https://app.openscale.so/app) for the OpenScale CLI installation instructions.
 
-See the [OpenScale Dashboard](https://app.openscale.so/app) for the OpenScale CLI installation
-instructions.
-
-Install and sign in to the OpenScale CLI if you haven't already:
+Ensure you are logged in before installing the plugin:
 
 ```bash
 osc login
@@ -121,7 +131,7 @@ dragging.
 
 ## Configuration
 
-Three settings are available in Omarchy’s **Settings → Widgets** panel and can also be edited from
+Three settings are available in Omarchy's **Settings → Widgets** panel and can also be edited from
 the command line:
 
 | Setting              | Default | What it does                                                    |
