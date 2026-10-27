@@ -6,8 +6,8 @@ the status bar, with a panel for usage, models and settings.
 - **Plugin id:** `io.github.kematzy.openscale`
 - **Kind:** `bar-widget` (one plugin; the popup is part of the widget, not a
   separate `panel` plugin)
-- **Status:** working credit balance and model catalogue, both read from the
-  `osc` CLI. Usage and settings tabs are still placeholders
+- **Status:** working credit balance, spend and token usage, and the model
+  catalogue — all read from the `osc` CLI. Three tabs: Spend, Tokens, Models
 
 ## Layout
 
@@ -16,13 +16,16 @@ the status bar, with a panel for usage, models and settings.
 | `manifest.json` | Plugin contract: id, kind, entry point, settings schema. Validated by `omarchy plugin validate` |
 | `BarWidget.qml` | Manifest entry point. The bar button, the `Service` that polls the balance, plus the `Loader` that owns `Panel.qml` and forwards `open()/close()/toggle()` |
 | `Service.qml` | Polls `osc balance --json` on a timer and when the panel opens, converts `balanceUusd` to dollars, formats the figure |
+| `Usage.qml` | Loads `osc usage --today/--7d/--30d` in order; one loader shared by the Spend and Tokens tabs |
+| `Format.js` | Shared number formatting: money, compact counts, percentages, timestamps |
 | `Panel.qml` | Composition only: header → tab bar → main area → footer, inside `qs.Ui`'s `Panel` + `KeyboardPanel` + `PanelKeyCatcher` |
 | `panel/PanelHeader.qml` | Brand lockup on the left, credit balance over its caption on the right (every tab) |
 | `panel/Tab.qml` | One tab button: theme-token pill, uppercase label |
 | `panel/PanelFooter.qml` | Three shortcut buttons that open pages on openscale.so (every tab) |
+| `panel/SpendTab.qml` | Four money columns (24 hours, today, week, month) and the low-balance control |
+| `panel/TokensTab.qml` | Requests and tokens for the three windows, with per-model token-share bars |
 | `panel/ModelsTab.qml` | The catalogue: one two-line block per model, cheapest input first, read through `models.sh` |
 | `models.sh` | Reads and refreshes the on-disk catalogue cache; the only write path, since QML cannot write files |
-| `panel/UsageTab.qml`, `panel/SettingsTab.qml` | Tab bodies — placeholders for now |
 | `assets/openscale.svg` | Bar button mark |
 | `assets/openscale-logo.svg` | Header lockup: mark + wordmark in one asset |
 
@@ -62,6 +65,7 @@ Polling is per widget and has two knobs:
 |---|---|---|
 | `refreshIntervalSec` | `300` | Background poll while the panel is closed. 30 s minimum, for development |
 | `openRefreshGapSec` | `60` | Opening the panel refreshes only if the last good fetch is older than this. `0` refreshes on every open |
+| `lowBalance` | `3` | The credit figure turns urgent at or below this amount, in the bar and the header. Also editable from the Spend tab |
 
 ```bash
 omarchy bar set io.github.kematzy.openscale refreshIntervalSec 120 --json
@@ -86,7 +90,27 @@ opens, and refreshed only when the tab is shown:
 - the cache holds the public catalogue only — ids, limits, list prices. No
   credential or account data goes near it
 
-The usage windows and the missing-CLI error screen are not built yet.
+### Spend and Tokens
+
+Both tabs are fed by `Usage.qml`, one loader, so switching between them never
+re-fetches. It runs `osc usage --today`, `--7d` and `--30d` in that order, each
+window rendering as it lands, with a 60 s floor so flicking between tabs does
+not re-issue three CLI calls. Nothing is cached on disk: usage moves constantly,
+and the on-disk decision was models-only.
+
+- **Spend** shows cost across four windows. `24 Hours` is the balance payload's
+  rolling `spent24hUusd`; `Today`, `Week` and `Month` are `costUusd` from the
+  usage windows. They can differ slightly because one is rolling and the others
+  are period totals.
+- **Tokens** shows requests plus input/cached/output/total for the same three
+  windows, then the share of tokens each model accounted for. Shares are tokens,
+  not spend — `osc usage` reports per-model tokens only.
+- The Spend tab also carries the low-balance control. Saving it calls
+  `omarchy bar set … lowBalance <n> --json`, the documented entry point for a
+  widget setting; a widget is injected only `bar`, `moduleName` and `settings`,
+  so there is no in-process API to call.
+
+The missing-CLI error screen is not built yet.
 
 ## Development
 
@@ -145,12 +169,12 @@ follows the active Omarchy theme.
 
 ## Known gaps
 
-- **Usage and settings tabs** are placeholders. `osc usage --today|--7d|--30d`
-  supplies the data for the first; the balance refresh interval is already a
-  manifest setting, the low-balance threshold is not yet.
-- **Models refresh** happens on every visit to the tab. Once the usage tab
-  exists, the plan is to floor that with the same `openRefreshGapSec` rule the
-  balance uses.
+- **No Settings tab.** The three settings live in `manifest.json`, which Omarchy
+  renders in its own Settings → Widgets UI, plus the low-balance control on the
+  Spend tab.
+- **Per-model spend** is not shown: `osc usage` reports tokens per model only,
+  so the bars are token share rather than cost.
+- **Models refresh** happens on every visit to the tab; usage has a 60 s floor.
 - **Console link** points at `https://openscale.so/login`; there is no
   `/console` page. Credits → `/credits`, Docs → `/docs` are confirmed live.
 - Tabs currently stretch to equal width (segmented-control look).

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
@@ -17,11 +18,12 @@ BarWidget {
   // the bar button, the tooltip and the panel.
   readonly property string creditText: service.creditText
   readonly property real balanceUsd: service.balanceUsd
+  readonly property real spent24hUsd: service.spent24hUsd
 
-  // Low-credit threshold in dollars. Hardcoded until the manifest exposes it
-  // as a setting; one owner here keeps the bar button and the panel header
-  // from disagreeing about when the figure turns urgent.
-  readonly property real lowBalance: 3
+  // Low-credit threshold in dollars, from this widget's inline settings. One
+  // owner here keeps the bar button, the panel header and the Spend tab from
+  // disagreeing about when the figure turns urgent.
+  readonly property real lowBalance: Number(setting("lowBalance", 3))
   readonly property bool lowCredit: balanceUsd >= 0 && balanceUsd <= lowBalance
   readonly property bool balanceRefreshing: service.refreshing
 
@@ -29,6 +31,18 @@ BarWidget {
   // last good one is still fresh, so repeated open/close does not poll.
   function refreshOnOpen() {
     service.refreshIfStale()
+  }
+
+  // A widget gets only bar/moduleName/settings injected, so there is no shell
+  // API to call. `omarchy bar set` is the documented entry point for a widget
+  // setting: it routes to shell.setBarWidget and rewrites this widget's inline
+  // entry, and the new value comes straight back through `settings`.
+  function saveLowBalance(value) {
+    var amount = Math.max(0, Math.round(Number(value) || 0))
+    if (saveProcess.running) return
+    saveProcess.command = ["omarchy", "bar", "set", root.moduleName, "lowBalance",
+      String(amount), "--json"]
+    saveProcess.running = true
   }
 
   // ---- Panel lifecycle contract -------------------------------------------
@@ -68,6 +82,7 @@ BarWidget {
     if ("settings" in target) target.settings = root.settings
     if ("anchorItem" in target) target.anchorItem = button
     if ("hostWidget" in target) target.hostWidget = root
+    if ("usage" in target) target.usage = usage
   }
 
   implicitWidth: button.implicitWidth
@@ -81,6 +96,22 @@ BarWidget {
     // Interval comes from this widget's inline shell.json entry, so changing
     // the setting takes effect without touching the code.
     settings: root.settings
+  }
+
+  // One usage loader for both usage tabs, so switching between them does not
+  // refetch the three windows.
+  Usage {
+    id: usage
+  }
+
+  Process {
+    id: saveProcess
+
+    running: false
+    onExited: function(exitCode) {
+      // Nothing to read back: the saved value arrives as a settings change.
+      if (exitCode !== 0) console.warn("openscale: could not save lowBalance, exit " + exitCode)
+    }
   }
 
   Loader {

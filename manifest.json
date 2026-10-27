@@ -6,7 +6,9 @@
   "author": "kematzy",
   "license": "MIT",
   "description": "OpenScale credit balance in the bar, with a panel for usage, models and settings.",
-  "kinds": ["bar-widget"],
+  "kinds": [
+    "bar-widget"
+  ],
   "entryPoints": {
     "barWidget": "BarWidget.qml"
   },
@@ -14,12 +16,16 @@
     "displayName": "OpenScale",
     "description": "Credit balance remaining. Click for usage, models and settings.",
     "category": "AI",
-    "aliases": ["openscale", "credits"],
+    "aliases": [
+      "openscale",
+      "credits"
+    ],
     "allowMultiple": false,
     "defaultSection": "right",
     "defaults": {
       "refreshIntervalSec": 300,
-      "openRefreshGapSec": 60
+      "openRefreshGapSec": 60,
+      "lowBalance": 3
     },
     "schema": [
       {
@@ -41,6 +47,16 @@
         "step": 10,
         "defaultValue": 60,
         "description": "Opening the panel refreshes the balance unless the last good fetch is younger than this. 0 refreshes on every open."
+      },
+      {
+        "key": "lowBalance",
+        "type": "number",
+        "label": "Low balance alert (USD)",
+        "min": 0,
+        "max": 1000,
+        "step": 1,
+        "defaultValue": 3,
+        "description": "The credit figure turns urgent at or below this amount, in the bar and the panel header."
       }
     ]
   }

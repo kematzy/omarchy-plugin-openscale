@@ -33,12 +33,19 @@ Panel {
   readonly property bool balanceRefreshing: hostWidget
     ? hostWidget.balanceRefreshing === true
     : false
+  readonly property real spent24hUsd: hostWidget ? hostWidget.spent24hUsd : -1
+  readonly property real lowBalance: hostWidget ? hostWidget.lowBalance : 3
+
+  // Injected by BarWidget.qml: one loader shared by the Spend and Tokens tabs.
+  property var usage: null
 
   // Opening the popup — by click or by `omarchy-shell shell summon` — asks the
   // host for a fresh balance and refreshes whichever data tab is showing. The
   // host decides whether the balance is stale enough; the tab only fetches if
   // it is the current one.
-  readonly property int modelsTabIndex: 1
+  readonly property int spendTabIndex: 0
+  readonly property int tokensTabIndex: 1
+  readonly property int modelsTabIndex: 2
 
   onOpenedChanged: if (opened) root.refreshOnOpen()
   onTabIndexChanged: root.refreshActiveTab()
@@ -48,7 +55,23 @@ Panel {
     root.refreshActiveTab()
   }
 
+  // Per-tab height. Spend sizes the card to what the whole column needs —
+  // header, tab strip, the tab itself and the footer — while the data tabs take
+  // the full box and scroll inside it, because how long they are depends on the
+  // catalogue and on how many models a window carries.
+  //
+  // The extra couple of pixels cover fittedContentHeight()'s rounding, which
+  // could otherwise leave the last row a fraction of a pixel outside the card.
+  // fittedContentHeight() still clamps the result to the screen.
+  readonly property real contentHeightTarget: tabIndex === root.spendTabIndex
+    ? Math.max(panelContent.implicitHeight, Style.space(240)) + Style.space(2)
+    : Style.space(600)
+
   function refreshActiveTab() {
+    if (tabIndex === root.spendTabIndex || tabIndex === root.tokensTabIndex) {
+      if (root.usage) root.usage.refresh()
+      return
+    }
     if (tabIndex === root.modelsTabIndex) modelsTab.refresh()
   }
 
@@ -78,11 +101,13 @@ Panel {
     centerOnBar: false
     focusTarget: keyCatcher
     contentWidth: panel.fittedContentWidth(Style.space(420))
-    contentHeight: panel.fittedContentHeight(Style.space(600))
+    contentHeight: panel.fittedContentHeight(root.contentHeightTarget)
 
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
+      // Let the Spend tab's number field keep its own keys while it is focused.
+      blocked: spendTab.editing
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
       onMoveRequested: function(dx, dy) { if (dx !== 0) root.stepTab(dx) }
@@ -91,6 +116,7 @@ Panel {
       }
 
       ColumnLayout {
+        id: panelContent
         anchors.fill: parent
         spacing: Style.space(12)
 
@@ -129,9 +155,17 @@ Panel {
             onCurrentIndexChanged: root.tabIndex = currentIndex
 
             Tab {
-              text: "Usage"
-              // The Usage datasets are not wired yet, so there is nothing to
-              // spin for. This becomes its loading flag with that work.
+              text: "Spend"
+              // Both usage tabs are fed by one loader, so both spin while it
+              // is fetching.
+              busy: root.usage ? root.usage.loading : false
+              fontFamily: root.contentFontFamily
+              foreground: root.contentForeground
+              accent: root.accentColor
+            }
+            Tab {
+              text: "Tokens"
+              busy: root.usage ? root.usage.loading : false
               fontFamily: root.contentFontFamily
               foreground: root.contentForeground
               accent: root.accentColor
@@ -140,12 +174,6 @@ Panel {
               text: "Models"
               // Spins only while the catalogue is actually being fetched.
               busy: modelsTab.loading
-              fontFamily: root.contentFontFamily
-              foreground: root.contentForeground
-              accent: root.accentColor
-            }
-            Tab {
-              text: "Settings"
               fontFamily: root.contentFontFamily
               foreground: root.contentForeground
               accent: root.accentColor
@@ -159,18 +187,29 @@ Panel {
           Layout.fillHeight: true
           currentIndex: root.tabIndex
 
-          UsageTab {
+          SpendTab {
+            id: spendTab
             fontFamily: root.contentFontFamily
             foreground: root.contentForeground
             mutedForeground: root.mutedForeground
+            accent: root.accentColor
+            spent24hUsd: root.spent24hUsd
+            usage: root.usage
+            lowBalance: root.lowBalance
+            onLowBalanceEdited: function(value) {
+              if (hostWidget && typeof hostWidget.saveLowBalance === "function")
+                hostWidget.saveLowBalance(value)
+            }
+          }
+          TokensTab {
+            id: tokensTab
+            fontFamily: root.contentFontFamily
+            foreground: root.contentForeground
+            accent: root.accentColor
+            usage: root.usage
           }
           ModelsTab {
             id: modelsTab
-            fontFamily: root.contentFontFamily
-            foreground: root.contentForeground
-            mutedForeground: root.mutedForeground
-          }
-          SettingsTab {
             fontFamily: root.contentFontFamily
             foreground: root.contentForeground
             mutedForeground: root.mutedForeground

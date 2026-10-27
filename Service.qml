@@ -16,6 +16,9 @@ Item {
   // -1 means "not known yet", which is not the same as a balance of zero and
   // must never be drawn as a figure.
   property real balanceUsd: -1
+  // Rolling 24-hour spend, shown beside the calendar-day figures in the Spend
+  // tab so the two "recent" numbers can be told apart.
+  property real spent24hUsd: -1
   property bool ok: false
   property bool refreshing: false
   property string error: ""
@@ -88,6 +91,8 @@ Item {
     }
 
     balanceUsd = value / 1000000
+    var spend = parsed.spent24hUusd
+    spent24hUsd = spend === null || spend === undefined ? -1 : Number(spend) / 1000000
     ok = true
     error = ""
     lastSuccessAt = Date.now()
