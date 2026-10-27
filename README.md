@@ -1,185 +1,201 @@
 # OpenScale for Omarchy
 
-An [Omarchy](https://omarchy.org/) shell plugin: the OpenScale credit balance in
-the status bar, with a panel for usage, models and settings.
+**Your OpenScale credit, live in the Omarchy bar — with the spend, the token usage
+and the model catalogue one click away.**
 
-- **Plugin id:** `io.github.kematzy.openscale`
-- **Kind:** `bar-widget` (one plugin; the popup is part of the widget, not a
-  separate `panel` plugin)
-- **Status:** working credit balance, spend and token usage, and the model
-  catalogue — all read from the `osc` CLI. Three tabs: Spend, Tokens, Models
+![The Spend, Tokens and Models tabs](.assets/tab-spend.png)
 
-## Layout
+OpenScale serves open models through an OpenAI/Anthropic-compatible API. This
+plugin puts the only number you actually watch — how much credit is left — where
+you already look a hundred times a day, and keeps the details behind it a click
+away instead of a browser tab away.
 
-| File | Purpose |
-|------|---------|
-| `manifest.json` | Plugin contract: id, kind, entry point, settings schema. Validated by `omarchy plugin validate` |
-| `BarWidget.qml` | Manifest entry point. The bar button, the `Service` that polls the balance, plus the `Loader` that owns `Panel.qml` and forwards `open()/close()/toggle()` |
-| `Service.qml` | Polls `osc balance --json` on a timer and when the panel opens, converts `balanceUusd` to dollars, formats the figure |
-| `Usage.qml` | Loads `osc usage --today/--7d/--30d` in order; one loader shared by the Spend and Tokens tabs |
-| `Format.js` | Shared number formatting: money, compact counts, percentages, timestamps |
-| `Panel.qml` | Composition only: header → tab bar → main area → footer, inside `qs.Ui`'s `Panel` + `KeyboardPanel` + `PanelKeyCatcher` |
-| `panel/PanelHeader.qml` | Brand lockup on the left, credit balance over its caption on the right (every tab) |
-| `panel/Tab.qml` | One tab button: theme-token pill, uppercase label |
-| `panel/PanelFooter.qml` | Three shortcut buttons that open pages on openscale.so (every tab) |
-| `panel/SpendTab.qml` | Four money columns (24 hours, today, week, month) and the low-balance control |
-| `panel/TokensTab.qml` | Requests and tokens for the three windows, with per-model token-share bars |
-| `panel/ModelsTab.qml` | The catalogue: one two-line block per model, cheapest input first, read through `models.sh` |
-| `models.sh` | Reads and refreshes the on-disk catalogue cache; the only write path, since QML cannot write files |
-| `assets/openscale.svg` | Bar button mark |
-| `assets/openscale-logo.svg` | Header lockup: mark + wordmark in one asset |
+Everything comes from OpenScale's own signed-in CLI (`osc`). There is no API key
+to paste, no token to store, and nothing to keep in sync.
 
-## How the shell loads it
+## What it gives you
 
-`BarWidget.qml` is the entry point. It loads `Panel.qml` itself and exposes the
-lifecycle the bar and `omarchy-shell shell summon` talk to:
+### In the bar
 
-```
-opened, open(), close(), toggle(), popoutSwitchClosing, closeForPopoutSwitch()
-```
+- The balance, next to the OpenScale mark: `$11.20`.
+- It turns **urgent** when your credit drops to or below a threshold you set
+  (default `$3.00`).
+- Hover for the balance and, if a refresh failed, why.
+- Click to open the panel; it refreshes the figure as it opens.
+- Refreshes itself every 5 minutes in the background, so a glance is never far
+  off — and immediately when you open the panel, if the last read is older than a
+  minute.
 
-`Panel.qml` receives `bar`, `settings`, `anchorItem` (the bar button) and
-`hostWidget` via `injectPanel()` in `BarWidget.qml` — that is what anchors the
-popup under the button and lets the bar know which panel is open. The balance
-itself is not copied in: the panel reads `hostWidget.creditText` and
-`hostWidget.lowCredit` live, so a poll updates header and bar together.
+### Spend tab
 
-## Data
+The money, across four windows that answer different questions:
 
-The balance comes from the `osc` CLI, which must be installed and signed in
-(`openscale login`):
+| Window            | What it is                                       |
+| ----------------- | ------------------------------------------------ |
+| **Last 24 hours** | rolling spend, straight from the account balance |
+| **Today only**    | the calendar day so far                          |
+| **Last 7 days**   | the rolling week                                 |
+| **Last 30 days**  | the rolling month                                |
+
+`Last 24 hours` and `Today only` are deliberately different numbers: one rolls,
+one resets at midnight.
+
+Below them, the **low balance alert** — the threshold that makes the bar and the
+panel figure go urgent. Edit it in place; it is saved to your bar configuration.
+
+### Tokens tab
+
+Requests and tokens for today, the last 7 days and the last 30 days: requests,
+input, cached input, output and their total. Under each window, the share of
+tokens each model accounted for, as proportional bars — which tells you what is
+actually doing the work.
+
+### Models tab
+
+Every model on offer, cheapest input first, with what you need to choose one:
+
+- context window
+- price per 1M tokens for input, output and cached input
+- a ⚡ mark for fast-serving variants
+- **NEW** against anything that appeared since the copy you had cached
+
+The catalogue is cached on disk, so the tab is populated the instant the panel
+opens and refreshes only when you look at it.
+
+### Keyboard
+
+`1` `2` `3` jump to a tab · `←` `→` (or `h` `l`) move between them · `Esc`
+closes · `Tab` moves to the neighbouring bar panel. The threshold field on the
+Spend tab takes over the arrow keys and digits while it has focus, so typing
+`10` does not jump to tab 1.
+
+## Screenshots
+
+| Spend                           | Tokens                            | Models                            |
+| ------------------------------- | --------------------------------- | --------------------------------- |
+| ![Spend](.assets/tab-spend.png) | ![Tokens](.assets/tab-tokens.png) | ![Models](.assets/tab-models.png) |
+
+## Requirements
+
+- **[Omarchy](https://omarchy.org/)** with `omarchy-shell` — the plugin targets its
+  bar widget and panel API.
+- **The OpenScale CLI, signed in.** The plugin reads everything through it.
+
+  ```bash
+  curl -fsSL https://openscale.so/install | sh
+  osc login
+  ```
+
+- **`jq`**, used by the model-cache helper. Omarchy ships with it; on a bare
+  Arch install, `omarchy pkg add jq`.
+
+## Install
 
 ```bash
-osc balance --json
-# {"balanceUusd": 11195181, "spent24hUusd": 231648, "runwayHours": 1159.9, "planCovered": false}
+omarchy plugin add https://github.com/kematzy/omarchy-plugin-openscale.git --enable
+omarchy restart shell
 ```
 
-`balanceUusd` is a micro-USD integer, so it is divided by 1,000,000 and shown as
-`$11.20`. The public API has no credit endpoint; the CLI is the only read-only
-source for it. The plugin runs exactly one fixed command — nothing is
-interpolated into it, and nothing it does writes to the account.
+The widget lands in the right section of the bar. Move it with `omarchy bar move`
+if you want it elsewhere.
 
-Polling is per widget and has two knobs:
-
-| Setting | Default | What it does |
-|---|---|---|
-| `refreshIntervalSec` | `300` | Background poll while the panel is closed. 30 s minimum, for development |
-| `openRefreshGapSec` | `60` | Opening the panel refreshes only if the last good fetch is older than this. `0` refreshes on every open |
-| `lowBalance` | `3` | The credit figure turns urgent at or below this amount, in the bar and the header. Also editable from the Spend tab |
+By hand instead:
 
 ```bash
+git clone https://github.com/kematzy/omarchy-plugin-openscale.git \
+  ~/.config/omarchy/plugins/io.github.kematzy.openscale
+omarchy plugin enable io.github.kematzy.openscale
+omarchy restart shell
+```
+
+The folder name must equal the manifest id, which is why the clone goes to that
+path.
+
+## Configuration
+
+Three settings, all live in your bar configuration and all editable from
+Omarchy's own **Settings → Widgets** panel:
+
+| Setting              | Default | What it does                                                                                             |
+| -------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| `lowBalance`         | `3`     | Turn the figure urgent at or below this many dollars. Also editable on the Spend tab                     |
+| `refreshIntervalSec` | `300`   | How often the balance is re-read in the background, 30 s minimum                                         |
+| `openRefreshGapSec`  | `60`    | Opening the panel re-reads the balance only if the last read is older than this. `0` reads on every open |
+
+```bash
+omarchy bar set io.github.kematzy.openscale lowBalance 10 --json
 omarchy bar set io.github.kematzy.openscale refreshIntervalSec 120 --json
 ```
 
-A small spinner ahead of the figure turns while a fetch is in flight. A failed
-poll keeps the last good figure on screen and puts the reason in the bar tooltip;
-an unknown balance is shown as `—`, never `$0.00`. At or below `$3.00` the figure
-turns urgent in both the bar and the header.
+## Privacy and safety
 
-### Models
+A credit widget has no business touching your account, so this one doesn't:
 
-The catalogue is cached on disk so the tab is populated the moment the panel
-opens, and refreshed only when the tab is shown:
+- **Read-only.** The only OpenScale operations are the CLI's own `balance`,
+  `usage` and `models` reads. The plugin never creates, rotates or revokes a key,
+  never moves credit, and never writes to your account.
+- **Your credentials stay the CLI's.** The plugin never reads, copies, logs or
+  caches a token or API key. `osc` owns the device login; the widget just asks it
+  questions.
+- **Only two things are ever written**, both local: a cache of the public model
+  catalogue in `~/.cache/omarchy/openscale/`, and — when you edit it — the
+  low-balance value in your own bar configuration, through `omarchy bar set`.
+- **No hidden network calls.** The plugin speaks to nothing directly; all
+  traffic is the `osc` CLI talking to OpenScale.
+- **Fixed commands only.** Every process it starts uses a constant argv
+  (`osc balance --json`, `models.sh --read`, `omarchy bar set …`, `xdg-open
+  <link>`); nothing you type is interpolated into a shell command.
+- **No stored secrets, no elevated privileges**, and no writes outside your home
+  directory. The catalogue cache is public data — ids, limits, list prices.
+- **It fails visibly.** A failed read keeps the last good figure on screen and
+  says why in the tooltip or the tab's footer line, rather than blanking out.
 
-- cache: `${XDG_CACHE_HOME:-~/.cache}/omarchy/openscale/models.json`, holding
-  `{"fetchedAt": <epoch seconds>, "models": [...]}`
-- `models.sh --read` prints the cached envelope (`{}` when there is none);
-  `models.sh --refresh` runs `osc models --json`, replaces the cache atomically
-  and prints the fresh envelope. Both always exit 0 with JSON, so a failure is a
-  state the tab renders rather than an error it swallows
-- the cache holds the public catalogue only — ids, limits, list prices. No
-  credential or account data goes near it
+The plugin runs inside `omarchy-shell`, as all bar widgets do. If you want to
+audit it before enabling, the whole thing is a dozen QML files plus one shell
+script — start with `Service.qml`, `Usage.qml` and `models.sh`.
 
-### Spend and Tokens
-
-Both tabs are fed by `Usage.qml`, one loader, so switching between them never
-re-fetches. It runs `osc usage --today`, `--7d` and `--30d` in that order, each
-window rendering as it lands, with a 60 s floor so flicking between tabs does
-not re-issue three CLI calls. Nothing is cached on disk: usage moves constantly,
-and the on-disk decision was models-only.
-
-- **Spend** shows cost across four windows. `24 Hours` is the balance payload's
-  rolling `spent24hUusd`; `Today`, `Week` and `Month` are `costUusd` from the
-  usage windows. They can differ slightly because one is rolling and the others
-  are period totals.
-- **Tokens** shows requests plus input/cached/output/total for the same three
-  windows, then the share of tokens each model accounted for. Shares are tokens,
-  not spend — `osc usage` reports per-model tokens only.
-- The Spend tab also carries the low-balance control. Saving it calls
-  `omarchy bar set … lowBalance <n> --json`, the documented entry point for a
-  widget setting; a widget is injected only `bar`, `moduleName` and `settings`,
-  so there is no in-process API to call.
-
-The missing-CLI error screen is not built yet.
-
-## Development
-
-This checkout lives at `~/.config/omarchy/plugins/io.github.kematzy.openscale`,
-which is where the shell looks for plugins. **The folder name must equal the
-manifest `id`** — enable state, bar layout and the reload watcher are all keyed
-by it.
-
-The shell watches that folder (`inotifywait`) and reloads plugin code when a file
-is saved. If a change does not appear:
+## Updating and removing
 
 ```bash
-omarchy-shell shell rescanPlugins
+omarchy plugin update io.github.kematzy.openscale
+omarchy plugin remove io.github.kematzy.openscale
 ```
 
-Note this watcher does **not** follow symlinks, so a symlinked plugin folder gets
-no automatic reload — keep the real checkout here.
+Removing the plugin leaves `~/.cache/omarchy/openscale/models.json` behind; it is
+harmless and safe to delete:
 
-### Checks
+```bash
+rm -rf ~/.cache/omarchy/openscale
+```
+
+## Contributing
+
+Issues and pull requests are welcome. Before opening a PR:
 
 ```bash
 omarchy plugin validate .
 ```
 
-Static QML check against the shell's own components (`qs.Ui`, `qs.Commons`). The
-`qs` prefix only resolves inside the shell's config dir, so qmllint needs an
-import path shaped like it:
+and, if you have the shell's QML kit on disk, the lint described in
+[docs/README.md](docs/README.md#checks). Keep changes focused and match the
+surrounding style — the code is commented for a reason.
 
-```bash
-mkdir -p /tmp/qmlimports && ln -sfn /usr/share/omarchy/shell /tmp/qmlimports/qs
-/usr/lib/qt6/bin/qmllint -I /tmp/qmlimports BarWidget.qml Panel.qml panel/*.qml
-```
+## Licence
 
-Expect `Style.font.*` / `bar.*` "missing-property" warnings: those singletons are
-declared as `QtObject`, so qmllint cannot see their members. The built-in Omarchy
-plugins produce the same ones.
+[MIT](LICENSE).
 
-### Trying it
+## Credits
 
-Click the bar widget, or:
+- **[OpenScale](https://openscale.so)** — the models, the API and the `osc` CLI
+  this plugin is a window onto.
+- **[Omarchy](https://omarchy.org)** — the desktop, its shell, and the `qs.Ui`
+  component kit the panel is built from.
+- **[Omarchy.OpenRouter](https://github.com/SpoilHeap/Omarchy.OpenRouter)** by
+  SpoilHeap — the reference for what a bar widget with a popup should look like,
+  and the source of several good ideas about handling a balance that comes from a
+  CLI-ish source.
 
-```bash
-omarchy-shell shell summon io.github.kematzy.openscale   # open
-omarchy-shell shell hide io.github.kematzy.openscale     # close
-```
+## Technical documentation
 
-Inside the panel: `Esc` closes, `←`/`→` (or `h`/`l`) change tabs, `1`/`2`/`3`
-jump to a tab, `Tab` switches to the neighbouring bar panel.
-
-## Theming
-
-Everything reads `qs.Commons`: `Style.space()` for metrics, `Style.font.*` for
-type, `Color.foreground` / `Color.muted` / `Color.accent` for colour, and the
-`bar` object for font family and foreground. No hardcoded colours, so the panel
-follows the active Omarchy theme.
-
-## Known gaps
-
-- **No Settings tab.** The three settings live in `manifest.json`, which Omarchy
-  renders in its own Settings → Widgets UI, plus the low-balance control on the
-  Spend tab.
-- **Per-model spend** is not shown: `osc usage` reports tokens per model only,
-  so the bars are token share rather than cost.
-- **Models refresh** happens on every visit to the tab; usage has a 60 s floor.
-- **Footer links** use the app's own routes: Credits →
-  `https://app.openscale.so/app?credits=open` (what `osc claim` opens, showing
-  the Add Credits dialog), Console → `https://app.openscale.so/app`, Docs →
-  `https://openscale.so/docs`. The Credits route is a constant here; if OpenScale
-  changes it, `osc claim` prints the URL it now uses.
-- Tabs currently stretch to equal width (segmented-control look).
-- `README` and `LICENSE` exist, which the marketplace requires; the repository
-  must be **public** before it can be submitted.
+Architecture, data sources, refresh and caching policy, the Omarchy plugin
+mechanics, and how to work on the code: **[docs/README.md](docs/README.md)**.
