@@ -1,23 +1,110 @@
-<p align="center">
+<!-- markdownlint-disable-file MD033 -->
+
+<div align="center">
   <img src="assets/openscale-logo.svg" alt="OpenScale" width="213">
-</p>
+</div>
 
-# OpenScale for Omarchy
+# OpenScale for Omarchy v4+
 
-**Keep your OpenScale balance in the Omarchy bar. Open the panel for spending, token usage, and model pricing.**
+**Your OpenScale balance in the Omarchy bar with easy access to extended spending, token usage,
+and model pricing information**
 
-OpenScale provides an OpenAI- and Anthropic-compatible API for open models. This plugin adds a balance widget and detail panel to the Omarchy bar, using your signed-in `osc` CLI so there is no API key to configure in the plugin.
+[OpenScale](https://openscale.so) provides open-source AI models at cheap prices for users in
+emerging economies.
 
-> **Independent community plugin:** I’m an OpenScale customer, not affiliated with or endorsed by OpenScale.
+This plugin adds an [Omarchy](https://omarchy.org) top bar widget showing current account balance,
+with a popup window displaying the **account balance** and what was spent **today**, the last seven
+or 30 days. It also shows token usage, which models were used and available models and their usage rates.
 
-## Quick start
+<div align="center">
+  <img src=".assets/tab-spend.png" alt="The OpenScale plugin">
+</div>
 
-You’ll need **Omarchy** with `omarchy-shell`, the **OpenScale CLI** signed in, and **`jq`** (included with Omarchy).
+---
 
-Install and sign in to the OpenScale CLI if you haven’t already:
+> [!NOTE]
+> This project is not affiliated with or endorsed by OpenScale.
+
+---
+
+## Key Features
+
+### Spending Overview (USD)
+
+<div align="center">
+  <img src=".assets/tab-spend.png" alt="OpenScale plugin spend tab">
+</div>
+
+- Provides a quick overview of the rolling spending within:
+  - the **Last 24 hours**
+  - **Today** (_resets at midnight_)
+  - the **Last 7 days**
+  - the **Last 30 days**
+- Set your own low-balance alert threshold, by default USD $3.00.
+
+<br />
+
+### Tokens & Models Used
+
+<div align="center">
+  <img src=".assets/tab-tokens.png" alt="OpenScale plugin tokens tab">
+</div>
+
+- Easy overview of requests and token usage for:
+  - **Today**
+  - the **Last 7 days**
+  - the **Last 30 days**
+- Shows used models in proportional bars with relative percentage values.
+
+<br />
+
+### Available Models & Pricing
+
+<div align="center">
+  <img src=".assets/tab-models.png" alt="OpenScale plugin models tab">
+</div>
+
+- Shows available models, sorted by input price, with details showing:
+  - Context window
+  - Input, output, and cached-input prices per 1M tokens
+  - A ⚡ mark for fast-serving variants
+  - A **NEW** label beside recently added models
+
+> [!Note]
+> The list is cached on disk for 24 hours or refreshes when you visit the Models tab.
+
+<br />
+
+### Low Balance Notification
+
+<div align="center">
+  <img src=".assets/low-balance-notification.png" alt="OpenScale plugin low balance notification">
+</div>
+
+- Shown as red in the bar widget and panel header when your remaining balance is below your set limit.
+- The balance refreshes every 5 minutes by default, or when the panel is opened.
+
+### Keyboard Navigation
+
+- Switch tabs by pressing `1`, `2`, `3` or `←`, `→` or `h`, `l`
+- Press `Esc` to close the panel
+- Press `Tab` to move to the next bar panel.
+
+> [!Note]
+> When the low-balance threshold field is focused, arrow keys and digits are captured.
+
+---
+
+## Quick Start
+
+To use the plugin you need to have **OpenScale CLI** installed and be signed in.
+
+See the [OpenScale Dashboard](https://app.openscale.so/app) for the OpenScale CLI installation
+instructions.
+
+Install and sign in to the OpenScale CLI if you haven't already:
 
 ```bash
-curl -fsSL https://openscale.so/install | sh
 osc login
 ```
 
@@ -25,119 +112,88 @@ Then install the plugin and restart the shell:
 
 ```bash
 omarchy plugin add https://github.com/kematzy/omarchy-plugin-openscale.git --enable
-omarchy restart shell
 ```
 
-The widget appears in the right section of the bar. Move it with `omarchy bar move` if you want it elsewhere.
+The widget appears in the right section of the bar, but you can easily move it by clicking and
+dragging.
 
-On a bare Arch install, install `jq` with `omarchy pkg add jq`.
-
-To install by hand instead:
-
-```bash
-git clone https://github.com/kematzy/omarchy-plugin-openscale.git \
-  ~/.config/omarchy/plugins/io.github.kematzy.openscale
-omarchy plugin enable io.github.kematzy.openscale
-omarchy restart shell
-```
-
-The clone folder must match the plugin’s manifest ID, which is why it is cloned to that path.
-
-## Features
-
-### Balance in the bar
-
-- See your OpenScale balance next to the OpenScale mark, for example `$11.20`.
-- Set a low-balance threshold; the balance is highlighted when it reaches or falls below it (default: `$3.00`).
-- Hover to see the balance and, if a refresh failed, the reason.
-- Click to open the panel. The balance refreshes as the panel opens if the last read is older than a minute.
-- The balance refreshes in the background every 5 minutes by default.
-
-![The bar widget with its balance highlighted at or below the threshold](.assets/low-balance-notification.png)
-
-*When the balance reaches the threshold, it is highlighted in the bar and panel header.*
-
-### Spend tab
-
-Compare spending across four time windows:
-
-| Window            | What it shows                                      |
-| ----------------- | -------------------------------------------------- |
-| **Last 24 hours** | Rolling spend, calculated from the account balance |
-| **Today**         | Spend so far in the current calendar day           |
-| **Last 7 days**   | Rolling seven-day spend                            |
-| **Last 30 days**  | Rolling 30-day spend                               |
-
-**Last 24 hours** and **Today** are different measures: one is a rolling window, the other resets at midnight.
-
-The low-balance alert threshold is also shown here. Edit it in place; the value is saved to your bar configuration.
-
-### Tokens tab
-
-See request and token totals for today, the last 7 days, and the last 30 days. The breakdown includes input, cached input, output, and total tokens. Proportional bars show each model’s share of token usage in each time window.
-
-### Models tab
-
-Browse the available models, sorted by input price, with details to help you choose:
-
-- Context window
-- Input, output, and cached-input prices per 1M tokens
-- A ⚡ mark for fast-serving variants
-- **NEW** beside models added since your cached catalogue was last updated
-
-The catalogue is cached on disk, so it appears immediately when the panel opens and refreshes when you visit the Models tab.
-
-### Keyboard controls
-
-`1` `2` `3` switch tabs · `←` `→` (or `h` `l`) move between tabs · `Esc` closes the panel · `Tab` moves to the neighbouring bar panel.
-
-When the low-balance threshold field is focused, it captures arrow keys and digits so typing `10` does not switch to tab 1.
-
-### Screenshots
-
-| Spend                           | Tokens                            | Models                            |
-| ------------------------------- | --------------------------------- | --------------------------------- |
-| ![Spend tab](.assets/tab-spend.png) | ![Tokens tab](.assets/tab-tokens.png) | ![Models tab](.assets/tab-models.png) |
+---
 
 ## Configuration
 
-Three settings are available in Omarchy’s **Settings → Widgets** panel and can also be edited from the command line:
+Three settings are available in Omarchy’s **Settings → Widgets** panel and can also be edited from
+the command line:
 
-| Setting              | Default | What it does                                                                                  |
-| -------------------- | ------- | --------------------------------------------------------------------------------------------- |
-| `lowBalance`         | `3`     | Highlight the balance at or below this many dollars. Also editable on the Spend tab.           |
-| `refreshIntervalSec` | `300`   | Background refresh interval in seconds (30-second minimum).                                    |
-| `openRefreshGapSec`  | `60`    | Refresh on panel open only if the last read is older than this. Set to `0` to refresh on every open. |
+| Setting              | Default | What it does                                                    |
+| -------------------- | ------- | --------------------------------------------------------------- |
+| `lowBalance`         | `3`     | Highlight the balance at or below this many dollars.            |
+| `refreshIntervalSec` | `300`   | Background refresh interval in seconds.                         |
+| `openRefreshGapSec`  | `60`    | Refresh on panel open only if the last read is older than this. |
 
 ```bash
 omarchy bar set io.github.kematzy.openscale lowBalance 10 --json
 omarchy bar set io.github.kematzy.openscale refreshIntervalSec 120 --json
 ```
 
-## Privacy and safety
+## Privacy & Safety
 
-- **Read-only account access.** The plugin uses the CLI to read your balance, usage, and model catalogue. It does not create, rotate, or revoke API keys, move credit, or write to your OpenScale account.
-- **Credentials stay with the CLI.** The plugin does not read, copy, log, or cache your token or API key. `osc` manages device login; the widget requests data through the CLI.
-- **Local persistent data.** The model catalogue cache is stored in `~/.cache/omarchy/openscale/`. The low-balance threshold is saved to your bar configuration through `omarchy bar set`.
-- **No direct OpenScale network requests.** OpenScale traffic is handled by the `osc` CLI.
-- **Fixed commands.** The plugin starts commands with fixed arguments, such as `osc balance --json`, `models.sh --read`, and `omarchy bar set …`. Values you type are not interpolated into shell commands.
-- **No elevated privileges.** The plugin does not request elevated permissions.
-- **Visible errors.** If a read fails, the last successful balance remains visible and the error is shown in the tooltip or the tab’s footer.
+- **Read-only account access**
 
-The plugin runs inside `omarchy-shell`, like other bar widgets. To audit it before enabling, start with `Service.qml`, `Usage.qml`, and `models.sh`.
+  The plugin uses the CLI to read your balance, usage, and model catalogue. It does not create,
+  rotate, or revoke API keys, move credit, or write to your OpenScale account.
 
-## Updating and removing
+- **Credentials stay with the CLI**
+
+  The plugin does not read, copy, log, or cache your token or API key. `osc` manages device login;
+  the widget only requests data through the CLI.
+
+- **Local persistent data**
+
+  The model listing cache is stored in `~/.cache/omarchy/openscale/`, and the low-balance threshold
+  is saved to your bar configuration through `omarchy bar set`.
+
+- **No direct OpenScale network requests**
+
+  OpenScale traffic is handled by the `osc` CLI.
+
+- **Fixed commands**
+
+  The plugin starts commands with fixed arguments, such as `osc balance --json`, `models.sh --read`,
+  and `omarchy bar set …`. Values you type are not interpolated into shell commands.
+
+- **No elevated privileges**
+
+  The plugin does not request elevated permissions.
+
+- **Visible errors**
+
+  If a read fails, the last successful balance remains visible and the error is shown in the
+  tooltip or the tab's footer.
+
+The plugin runs inside `omarchy-shell`, like other bar widgets. To audit it before enabling,
+start with `Service.qml`, `Usage.qml`, and `models.sh`.
+
+## Updating & Removing
+
+To update the plugin, run this command:
 
 ```bash
 omarchy plugin update io.github.kematzy.openscale
+```
+
+To remove the plugin, run this command:
+
+```bash
 omarchy plugin remove io.github.kematzy.openscale
 ```
 
-Removing the plugin leaves `~/.cache/omarchy/openscale/models.json` behind. It is harmless and safe to delete:
-
-```bash
-rm -rf ~/.cache/omarchy/openscale
-```
+> [!Note]
+> Removing the plugin leaves `~/.cache/omarchy/openscale/models.json` behind. It is harmless and safe
+> to delete with:
+>
+> ```bash
+> rm -rf ~/.cache/omarchy/openscale
+> ```
 
 ## Contributing
 
@@ -147,18 +203,27 @@ Issues and pull requests are welcome. Before opening a PR, validate the plugin:
 omarchy plugin validate .
 ```
 
-If you have the shell’s QML kit on disk, run the lint described in [docs/README.md](docs/README.md#checks). Keep changes focused and follow the surrounding style; the code is commented for a reason.
+If you have the shell's QML kit on disk, run the lint described in [docs/README.md](docs/README.md#checks).
+Keep changes focused and follow the surrounding code style.
 
 ## License
 
-[MIT](LICENSE).
+Released under the [MIT](LICENSE).
+
+Copyright [Kematzy](https://github.com/kematzy)
 
 ## Credits
 
-- **[OpenScale](https://openscale.so)** — the models, API, and `osc` CLI this plugin uses. This is an independent community plugin and is not affiliated with OpenScale.
-- **[Omarchy](https://omarchy.org)** — the desktop, its shell, and the `qs.Ui` component kit used to build the panel.
-- **Omarchy plugin authors** — many Omarchy plugins have served as useful references for bar widgets and popup panels.
+- [**OpenScale**](https://openscale.so) — the models, API, and `osc` CLI this plugin uses.
+  Most of the plugin code was created using OpenScale models for assistance.
+
+- [**Omarchy**](https://omarchy.org) — the desktop, its shell, and the `qs.Ui` component kit used
+  to build the panel.
+
+- [**Omarchy plugin authors**](https://plugins.omarchy.org/) — many Omarchy plugins have served as
+  useful references for this plugin.
 
 ## Technical documentation
 
-For architecture, data sources, refresh and caching policies, Omarchy plugin mechanics, and development notes, see **[docs/README.md](docs/README.md)**.
+For architecture, data sources, refresh and caching policies, Omarchy plugin mechanics, and
+development notes, see **[docs/README.md](docs/README.md)**.
