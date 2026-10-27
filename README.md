@@ -175,8 +175,11 @@ follows the active Omarchy theme.
 - **Per-model spend** is not shown: `osc usage` reports tokens per model only,
   so the bars are token share rather than cost.
 - **Models refresh** happens on every visit to the tab; usage has a 60 s floor.
-- **Console link** points at `https://openscale.so/login`; there is no
-  `/console` page. Credits → `/credits`, Docs → `/docs` are confirmed live.
+- **Footer links** use the app's own routes: Credits →
+  `https://app.openscale.so/app?credits=open` (what `osc claim` opens, showing
+  the Add Credits dialog), Console → `https://app.openscale.so/app`, Docs →
+  `https://openscale.so/docs`. The Credits route is a constant here; if OpenScale
+  changes it, `osc claim` prints the URL it now uses.
 - Tabs currently stretch to equal width (segmented-control look).
 - `README` and `LICENSE` exist, which the marketplace requires; the repository
   must be **public** before it can be submitted.
