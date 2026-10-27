@@ -10,6 +10,12 @@ import "../Format.js" as Format
 //
 // The bars are token share, not spend: `osc usage` reports tokens per model
 // only, and inventing per-model cost from list prices would be a guess.
+//
+// The five figures are right-aligned into columns whose widths are shared by the
+// header row and the value row, so they line up down the section; the headers and
+// values are plain Texts (not nested layouts) because a layout nested in a layout
+// reports an unlimited preferred width and swallows the row's spare space. The
+// three sections scroll as one list once a window carries several models.
 ColumnLayout {
   id: root
 

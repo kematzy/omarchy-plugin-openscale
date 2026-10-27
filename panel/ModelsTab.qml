@@ -13,6 +13,11 @@ import "../Format.js" as Format
 // lets the name be read at subtitle size and the figures at body size, while
 // the four figures stay in fixed-width groups so they still line up from row to
 // row for comparison.
+//
+// The list comes from the on-disk catalogue cache via models.sh: read once when
+// the panel builds its tabs, refreshed each time the Models tab is shown. That
+// cached copy doubles as the baseline for the NEW badge — ids the live catalogue
+// has and the cache did not are flagged for the rest of the session.
 ColumnLayout {
   id: root
 

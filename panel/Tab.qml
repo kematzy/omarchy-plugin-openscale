@@ -16,8 +16,8 @@ TabButton {
   property color foreground: Commons.Color.foreground
   property color accent: Commons.Color.accent
   // Spins a refresh glyph at the tab's leading edge while that tab's data is
-  // loading. The data tabs set it from their own loading state once wired;
-  // Settings has nothing to load and never shows it.
+  // loading. Panel.qml binds it to the usage loader for Spend and Tokens, and
+  // to the catalogue's own loading flag for Models.
   property bool busy: false
 
   // Square tabs, not pills: no radius on any state, by preference.
@@ -27,6 +27,9 @@ TabButton {
   // control. The accent stays on the label.
   readonly property color activeColor: Util.alpha(root.foreground, 0.14)
 
+  // Fixed height so the strip is one band; the width has a floor of 84 so a
+  // short label still gives a comfortable target, and grows with a longer one.
+  // The TabBar shares the panel width between the tabs.
   implicitHeight: Style.space(32)
   implicitWidth: Math.max(Style.space(84), label.implicitWidth + Style.space(24))
 

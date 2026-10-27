@@ -7,6 +7,9 @@ import qs.Ui
 // Panel footer, shown below the tabs on every tab: a full-width rule closing
 // the panel body, then three shortcut buttons that open the matching page on
 // openscale.so.
+//
+// A layout rather than a row, because the rule has to span the panel width while
+// the buttons sit in their own row below it.
 ColumnLayout {
   id: root
 

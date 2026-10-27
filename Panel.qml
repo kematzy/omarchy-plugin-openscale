@@ -8,10 +8,23 @@ import "panel"
 
 // The OpenScale popup: header, tabs, main area, footer.
 //
-// `Panel` (qs.Ui) owns the open/close state; `KeyboardPanel` anchors a
-// layer-shell card to the bar button and handles outside-click dismissal;
-// `PanelKeyCatcher` gives us Escape, Tab (switch to the neighbouring panel)
-// and the arrow keys.
+// Composition only. `Panel` (qs.Ui) owns the open/close state; `KeyboardPanel`
+// anchors a layer-shell card to the bar button and handles outside-click
+// dismissal; `PanelKeyCatcher` gives us Escape, Tab (switch to the neighbouring
+// panel) and the arrow keys.
+//
+// This file is also where the panel's three cross-cutting decisions live:
+//
+//   * tab order — Spend 0, Tokens 1, Models 2, mirrored by the StackLayout and
+//     by the 1/2/3 shortcuts;
+//   * what refreshing means — opening the popup refreshes the balance and
+//     whichever data tab is showing, and switching tabs refreshes the tab being
+//     shown (the loaders own their own floors, so this is safe to call often);
+//   * how tall the card is — the Spend tab sizes it to its content, the data
+//     tabs take the full box and scroll inside it.
+//
+// The balance itself is read live from the host widget rather than copied in,
+// so the header follows the poller instead of a snapshot taken at load.
 Panel {
   id: root
   moduleName: "io.github.kematzy.openscale"

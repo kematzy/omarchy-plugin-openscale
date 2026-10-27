@@ -10,6 +10,12 @@ import qs.Ui
 // panel lifecycle (open/close/toggle) that the bar and `omarchy-shell shell
 // summon` route through. That split is the documented shape for a bar widget
 // with a popup: one plugin, one kind ("bar-widget"), no separate panel kind.
+//
+// It owns the two data loaders — Service (balance) and Usage (the three usage
+// windows) — and therefore the only shared state in the plugin; the panel and
+// its tabs are presentational. It also owns the one write path: saving the
+// low-balance threshold, which goes out through `omarchy bar set` because a bar
+// widget is injected only bar, moduleName and settings.
 BarWidget {
   id: root
   moduleName: "io.github.kematzy.openscale"

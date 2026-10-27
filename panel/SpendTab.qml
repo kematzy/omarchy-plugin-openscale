@@ -9,9 +9,14 @@ import "../Format.js" as Format
 // "Spend" tab: what the account has cost over four overlapping windows, then
 // the one setting worth a control — the low-balance threshold.
 //
-// The 24 Hours column is rolling and comes from the balance poll, while Today,
-// Week and Month are calendar/period figures from `osc usage`. They can differ
-// slightly for that reason, which is why the labels distinguish them.
+// "Last 24 hours" is rolling spend from the balance payload (Service.qml), while
+// "Today only", "Last 7 days" and "Last 30 days" are the period figures from the
+// usage loader. The rolling and calendar numbers therefore differ slightly, which
+// is why the labels distinguish them.
+//
+// The threshold is edited here but owned by the widget: lowBalanceEdited travels
+// to Panel.qml and from there to BarWidget.saveLowBalance(), because persisting a
+// widget setting has to go through `omarchy bar set`.
 ColumnLayout {
   id: root
 
