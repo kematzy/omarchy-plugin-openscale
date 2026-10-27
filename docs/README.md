@@ -144,7 +144,7 @@ Nothing is polled that nobody is looking at, and nothing is fetched twice.
 | Balance       | background timer                 | `refreshIntervalSec`, default 300 s                                 | memory (`Service.qml`) |
 | Balance       | panel opens                      | only if the last good read is older than `openRefreshGapSec` (60 s) | memory                 |
 | Usage windows | Spend/Tokens tab becomes current | 60 s floor, hardcoded                                               | memory (`Usage.qml`)   |
-| Models        | Models tab becomes current       | every visit                                                         | disk + memory          |
+| Models        | Models tab becomes current       | if cache is missing or at least 24 hours old                        | disk + memory          |
 
 Details worth knowing:
 
@@ -163,6 +163,8 @@ Details worth knowing:
   - Shape: `{"fetchedAt": <epoch seconds>, "models": [ … ]}` — an envelope because
     the CLI returns a bare array, which cannot carry a timestamp.
   - Written atomically (`mktemp` + `mv`), mode 600.
+  - A cached catalogue is reused for 24 hours; visiting the Models tab after it expires triggers
+    a refresh. A missing cache is fetched on the first visit.
   - The cache doubles as the baseline for the **NEW** badge: ids in the live list that the cached
     envelope did not have are marked for the session. No cache means no baseline, and then nothing
     is labelled.

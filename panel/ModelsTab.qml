@@ -15,9 +15,10 @@ import "../Format.js" as Format
 // row for comparison.
 //
 // The list comes from the on-disk catalogue cache via models.sh: read once when
-// the panel builds its tabs, refreshed each time the Models tab is shown. That
-// cached copy doubles as the baseline for the NEW badge — ids the live catalogue
-// has and the cache did not are flagged for the rest of the session.
+// the panel builds its tabs, refreshed when the Models tab is shown and the
+// cache is missing or at least 24 hours old. That cached copy doubles as the
+// baseline for the NEW badge — ids the live catalogue has and the cache did not
+// are flagged for the rest of the session.
 ColumnLayout {
   id: root
 
@@ -30,12 +31,15 @@ ColumnLayout {
   // sorting when the tab gains it; nothing sets it yet.
   property string sortKey: "input"
 
-  // Filled from the on-disk cache when the tab is created, then replaced by a
-  // live fetch each time it is shown. The cache lives at
+  // Filled from the on-disk cache when the tab is created. Refresh only after
+  // the cached catalogue is 24 hours old. The cache lives at
   // ${XDG_CACHE_HOME:-~/.cache}/omarchy/openscale/models.json and is read and
   // written through models.sh, because QML cannot write files.
   property var models: []
   property double fetchedAt: 0
+  property bool cacheLoaded: false
+  property bool refreshPending: false
+  readonly property int cacheRefreshGapSec: 24 * 60 * 60
   // Drives the spinner in the tab bar: true only while a fetch is in flight.
   property bool loading: false
   property string error: ""
@@ -71,7 +75,10 @@ ColumnLayout {
   Component.onCompleted: root.loadCache()
 
   function loadCache() {
-    if (helperPath === "") return
+    if (helperPath === "") {
+      cacheLoaded = true
+      return
+    }
     cacheProc.running = true
   }
 
@@ -87,10 +94,16 @@ ColumnLayout {
     return !!model && root.newIds[String(model.id)] === true
   }
 
-  // Panel.qml calls refresh() when this tab becomes the current one: one fetch
-  // per visit, guarded against overlapping runs.
+  // Panel.qml calls refresh() when this tab becomes current. Wait for the cache
+  // read, then fetch only when no cached catalogue exists or it is at least 24h old.
   function refresh() {
     if (proc.running) return
+    if (!cacheLoaded) {
+      refreshPending = true
+      return
+    }
+    var ageSec = fetchedAt > 0 ? Date.now() / 1000 - fetchedAt : Infinity
+    if (ageSec < cacheRefreshGapSec) return
     loading = true
     proc.running = true
   }
@@ -382,6 +395,11 @@ ColumnLayout {
     }
     onExited: function(exitCode) {
       if (exitCode === 0) root.apply(cacheOut.text, true)
+      root.cacheLoaded = true
+      if (root.refreshPending) {
+        root.refreshPending = false
+        root.refresh()
+      }
     }
   }
 
