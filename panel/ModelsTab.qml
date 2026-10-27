@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell.Io
 import qs.Commons
 import qs.Commons as Commons
+import "../Format.js" as Format
 
 // "Models" tab: two-line blocks, one per model, cheapest first.
 //
@@ -34,6 +35,13 @@ ColumnLayout {
   property bool loading: false
   property string error: ""
 
+  // The catalogue the cache held when the panel was built, so a refresh can
+  // tell which models were not in it. No cache means no baseline, and then
+  // nothing is labelled new — better than flagging the whole list.
+  property var knownIds: ({})
+  property bool hasBaseline: false
+  property var newIds: ({})
+
   readonly property string helperPath: String(Qt.resolvedUrl("../models.sh"))
     .replace(/^file:\/\//, "")
 
@@ -60,6 +68,18 @@ ColumnLayout {
   function loadCache() {
     if (helperPath === "") return
     cacheProc.running = true
+  }
+
+  function idsOf(list) {
+    var set = ({})
+    for (var i = 0; i < (list ? list.length : 0); i++) {
+      if (list[i] && list[i].id) set[String(list[i].id)] = true
+    }
+    return set
+  }
+
+  function isNew(model) {
+    return !!model && root.newIds[String(model.id)] === true
   }
 
   // Panel.qml calls refresh() when this tab becomes the current one: one fetch
@@ -93,21 +113,23 @@ ColumnLayout {
       if (!fromCache) error = "osc models returned no catalogue"
       return
     }
+    if (fromCache) {
+      knownIds = root.idsOf(parsed.models)
+      hasBaseline = true
+    } else if (hasBaseline) {
+      // Mark what the cached list did not have. The marks last for the session:
+      // the cache has been rewritten by now, so they cannot be recomputed later.
+      var fresh = root.idsOf(parsed.models)
+      var added = ({})
+      for (var id in fresh) if (knownIds[id] !== true) added[id] = true
+      newIds = added
+    }
+
     models = parsed.models
     fetchedAt = Number(parsed.fetchedAt) || 0
     error = ""
   }
 
-  // "2026-10-25 at 17:42:03" in local time.
-  function stamp(seconds) {
-    if (!seconds) return ""
-    var date = new Date(seconds * 1000)
-    function pad(value) {
-      return (value < 10 ? "0" : "") + value
-    }
-    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate())
-      + " at " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds())
-  }
 
   function sortedModels() {
     var list = []
@@ -139,28 +161,7 @@ ColumnLayout {
     return separator >= 0 ? name.slice(separator + 2) : name
   }
 
-  // $ per 1M tokens: two decimals normally, three when the rate is below a
-  // cent so cached prices are not rounded away to $0.00.
-  function money(value) {
-    var amount = Number(value)
-    if (!isFinite(amount) || amount < 0) return "—"
-    var text = amount.toFixed(3)
-    if (text.charAt(text.length - 1) === "0") text = text.slice(0, -1)
-    return "$" + text
-  }
 
-  // Compact context window: 1048568 reads as 1M, 131072 as 131K.
-  function context(value) {
-    var tokens = Number(value)
-    if (!isFinite(tokens) || tokens <= 0) return "—"
-    if (tokens >= 1000000) {
-      var millions = tokens / 1000000
-      var rounded = millions >= 10 ? Math.round(millions) : Math.round(millions * 10) / 10
-      return rounded + "M"
-    }
-    if (tokens >= 1000) return Math.round(tokens / 1000) + "K"
-    return String(Math.round(tokens))
-  }
 
   // Label in caption, figure in body: the label says what the number is, so the
   // table needs no header row and no abbreviation legend. The value is pushed
@@ -262,6 +263,18 @@ ColumnLayout {
               elide: Text.ElideRight
             }
 
+            // Not in the catalogue the cache held when the shell started.
+            Text {
+              visible: root.isNew(block.modelData)
+              text: "NEW"
+              color: root.accent
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: true
+              font.letterSpacing: 0.6
+              Layout.alignment: Qt.AlignVCenter
+            }
+
             Text {
               id: badge
               visible: block.modelData.fastMode === true
@@ -284,7 +297,7 @@ ColumnLayout {
             Figure {
               Layout.preferredWidth: root.columnContext
               label: "Ctx"
-              value: root.context(block.modelData.context)
+              value: Format.context(block.modelData.context)
             }
 
             // Flexible gaps: fixed content columns with the surplus shared
@@ -296,7 +309,7 @@ ColumnLayout {
             Figure {
               Layout.preferredWidth: root.columnInput
               label: "In"
-              value: root.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.input : -1)
+              value: Format.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.input : -1)
             }
 
             Item {
@@ -306,7 +319,7 @@ ColumnLayout {
             Figure {
               Layout.preferredWidth: root.columnOutput
               label: "Out"
-              value: root.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.output : -1)
+              value: Format.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.output : -1)
             }
 
             Item {
@@ -316,7 +329,7 @@ ColumnLayout {
             Figure {
               Layout.preferredWidth: root.columnCached
               label: "Cache"
-              value: root.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.cached : -1)
+              value: Format.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.cached : -1)
             }
           }
         }
@@ -343,7 +356,7 @@ ColumnLayout {
     // visibly stale rather than quietly wrong.
     Text {
       visible: root.error === "" && root.fetchedAt > 0
-      text: "Last updated: " + root.stamp(root.fetchedAt)
+      text: "Last updated: " + Format.stamp(root.fetchedAt)
       color: Util.alpha(root.foreground, 0.75)
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
