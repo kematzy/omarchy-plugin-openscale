@@ -18,7 +18,7 @@ ColumnLayout {
   property var links: [
     // The route `osc claim` opens: the app's own Add Credits dialog, rather
     // than the marketing site's /credits redirect through the login page.
-    { icon: "\uF09D", label: "Credits", url: "https://app.openscale.so/app?credits=open" },
+    { icon: "\uF067", label: "Credits", url: "https://app.openscale.so/app?credits=open" },
     { icon: "\uF120", label: "Console", url: "https://app.openscale.so/app" },
     { icon: "\uF02D", label: "Docs", url: "https://openscale.so/docs" }
   ]
