@@ -43,7 +43,7 @@ or 30 days. It also shows token usage, which models were used and available mode
   - **Today** (_resets at midnight_)
   - the **Last 7 days**
   - the **Last 30 days**
-- Set your own low-balance alert threshold, by default USD $3.00.
+- Set a low-balance alert threshold; the default is $3.00.
 
 <br />
 
@@ -80,7 +80,8 @@ or 30 days. It also shows token usage, which models were used and available mode
   - A **NEW** label beside recently added models
 
 > [!Note]
-> The list is cached on disk for 24 hours or refreshes when you visit the Models tab.
+> The model list is cached on disk for 24 hours. It appears immediately when you open the panel and
+> refreshes when you visit the Models tab after the cache expires.
 
 <br />
 
@@ -118,7 +119,7 @@ Ensure you are logged in before installing the plugin:
 osc login
 ```
 
-Then install the plugin and restart the shell:
+Then install and enable the plugin:
 
 ```bash
 omarchy plugin add https://github.com/kematzy/omarchy-plugin-openscale.git --enable
@@ -145,7 +146,12 @@ omarchy bar set io.github.kematzy.openscale lowBalance 10 --json
 omarchy bar set io.github.kematzy.openscale refreshIntervalSec 120 --json
 ```
 
-## Privacy & Safety
+## Privacy & Security
+
+- **Runs unsandboxed**
+
+  Like other Omarchy plugins, this plugin runs inside `omarchy-shell` without a sandbox and with
+  your user account's privileges. Review the code before enabling it.
 
 - **Read-only account access**
 
@@ -162,9 +168,11 @@ omarchy bar set io.github.kematzy.openscale refreshIntervalSec 120 --json
   The model listing cache is stored in `~/.cache/omarchy/openscale/`, and the low-balance threshold
   is saved to your bar configuration through `omarchy bar set`.
 
-- **No direct OpenScale network requests**
+- **OpenScale data access**
 
-  OpenScale traffic is handled by the `osc` CLI.
+  The plugin does not make OpenScale API requests itself; it reads account data through the
+  signed-in `osc` CLI. Clicking **Credits**, **Console**, or **Docs** opens an OpenScale page in
+  your browser.
 
 - **Fixed commands**
 
