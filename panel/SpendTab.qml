@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
 import qs.Commons as Commons
@@ -92,7 +91,7 @@ ColumnLayout {
       spacing: Style.space(2)
 
       Text {
-        text: "Set Low Balance"
+        text: "Low-balance alert"
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
@@ -100,7 +99,7 @@ ColumnLayout {
 
       Text {
         Layout.fillWidth: true
-        text: "Set your own minimum credit remaining amount to remind you add more credits"
+        text: "Highlight the balance in the bar and panel header when it falls to or below this amount."
         color: Util.alpha(root.foreground, 0.75)
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption

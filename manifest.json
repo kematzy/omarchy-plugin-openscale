@@ -56,7 +56,7 @@
         "max": 1000,
         "step": 1,
         "defaultValue": 3,
-        "description": "The credit figure turns urgent at or below this amount, in the bar and the panel header."
+        "description": "Highlight the balance in the bar and panel header when it falls to or below this amount."
       }
     ]
   }
