@@ -1,110 +1,38 @@
+<p align="center">
+  <img src="assets/openscale-logo.svg" alt="OpenScale" width="213">
+</p>
+
 # OpenScale for Omarchy
 
-**Your OpenScale credit, live in the Omarchy bar — with the spend, the token usage
-and the model catalogue one click away.**
+**Keep your OpenScale balance in the Omarchy bar. Open the panel for spending, token usage, and model pricing.**
 
-![The Spend, Tokens and Models tabs](.assets/tab-spend.png)
+OpenScale provides an OpenAI- and Anthropic-compatible API for open models. This plugin adds a balance widget and detail panel to the Omarchy bar, using your signed-in `osc` CLI so there is no API key to configure in the plugin.
 
-OpenScale serves open models through an OpenAI/Anthropic-compatible API. This
-plugin puts the only number you actually watch — how much credit is left — where
-you already look a hundred times a day, and keeps the details behind it a click
-away instead of a browser tab away.
+> **Independent community plugin:** I’m an OpenScale customer, not affiliated with or endorsed by OpenScale.
 
-Everything comes from OpenScale's own signed-in CLI (`osc`). There is no API key
-to paste, no token to store, and nothing to keep in sync.
+## Quick start
 
-## What it gives you
+You’ll need **Omarchy** with `omarchy-shell`, the **OpenScale CLI** signed in, and **`jq`** (included with Omarchy).
 
-### In the bar
+Install and sign in to the OpenScale CLI if you haven’t already:
 
-- The balance, next to the OpenScale mark: `$11.20`.
-- It turns **urgent** when your credit drops to or below a threshold you set
-  (default `$3.00`).
-- Hover for the balance and, if a refresh failed, why.
-- Click to open the panel; it refreshes the figure as it opens.
-- Refreshes itself every 5 minutes in the background, so a glance is never far
-  off — and immediately when you open the panel, if the last read is older than a
-  minute.
+```bash
+curl -fsSL https://openscale.so/install | sh
+osc login
+```
 
-![The bar widget with its balance in red, at or below the threshold](.assets/low-balance-notification.png)
-
-*Once the balance reaches your threshold the figure turns urgent, here and in
-the panel header, so a low balance is hard to miss.*
-
-### Spend tab
-
-The money, across four windows that answer different questions:
-
-| Window            | What it is                                       |
-| ----------------- | ------------------------------------------------ |
-| **Last 24 hours** | rolling spend, straight from the account balance |
-| **Today only**    | the calendar day so far                          |
-| **Last 7 days**   | the rolling week                                 |
-| **Last 30 days**  | the rolling month                                |
-
-`Last 24 hours` and `Today only` are deliberately different numbers: one rolls,
-one resets at midnight.
-
-Below them, the **low balance alert** — the threshold that makes the bar and the
-panel figure go urgent. Edit it in place; it is saved to your bar configuration.
-
-### Tokens tab
-
-Requests and tokens for today, the last 7 days and the last 30 days: requests,
-input, cached input, output and their total. Under each window, the share of
-tokens each model accounted for, as proportional bars — which tells you what is
-actually doing the work.
-
-### Models tab
-
-Every model on offer, cheapest input first, with what you need to choose one:
-
-- context window
-- price per 1M tokens for input, output and cached input
-- a ⚡ mark for fast-serving variants
-- **NEW** against anything that appeared since the copy you had cached
-
-The catalogue is cached on disk, so the tab is populated the instant the panel
-opens and refreshes only when you look at it.
-
-### Keyboard
-
-`1` `2` `3` jump to a tab · `←` `→` (or `h` `l`) move between them · `Esc`
-closes · `Tab` moves to the neighbouring bar panel. The threshold field on the
-Spend tab takes over the arrow keys and digits while it has focus, so typing
-`10` does not jump to tab 1.
-
-## Screenshots
-
-| Spend                           | Tokens                            | Models                            |
-| ------------------------------- | --------------------------------- | --------------------------------- |
-| ![Spend](.assets/tab-spend.png) | ![Tokens](.assets/tab-tokens.png) | ![Models](.assets/tab-models.png) |
-
-## Requirements
-
-- **[Omarchy](https://omarchy.org/)** with `omarchy-shell` — the plugin targets its
-  bar widget and panel API.
-- **The OpenScale CLI, signed in.** The plugin reads everything through it.
-
-  ```bash
-  curl -fsSL https://openscale.so/install | sh
-  osc login
-  ```
-
-- **`jq`**, used by the model-cache helper. Omarchy ships with it; on a bare
-  Arch install, `omarchy pkg add jq`.
-
-## Install
+Then install the plugin and restart the shell:
 
 ```bash
 omarchy plugin add https://github.com/kematzy/omarchy-plugin-openscale.git --enable
 omarchy restart shell
 ```
 
-The widget lands in the right section of the bar. Move it with `omarchy bar move`
-if you want it elsewhere.
+The widget appears in the right section of the bar. Move it with `omarchy bar move` if you want it elsewhere.
 
-By hand instead:
+On a bare Arch install, install `jq` with `omarchy pkg add jq`.
+
+To install by hand instead:
 
 ```bash
 git clone https://github.com/kematzy/omarchy-plugin-openscale.git \
@@ -113,19 +41,73 @@ omarchy plugin enable io.github.kematzy.openscale
 omarchy restart shell
 ```
 
-The folder name must equal the manifest id, which is why the clone goes to that
-path.
+The clone folder must match the plugin’s manifest ID, which is why it is cloned to that path.
+
+## Features
+
+### Balance in the bar
+
+- See your OpenScale balance next to the OpenScale mark, for example `$11.20`.
+- Set a low-balance threshold; the balance is highlighted when it reaches or falls below it (default: `$3.00`).
+- Hover to see the balance and, if a refresh failed, the reason.
+- Click to open the panel. The balance refreshes as the panel opens if the last read is older than a minute.
+- The balance refreshes in the background every 5 minutes by default.
+
+![The bar widget with its balance highlighted at or below the threshold](.assets/low-balance-notification.png)
+
+*When the balance reaches the threshold, it is highlighted in the bar and panel header.*
+
+### Spend tab
+
+Compare spending across four time windows:
+
+| Window            | What it shows                                      |
+| ----------------- | -------------------------------------------------- |
+| **Last 24 hours** | Rolling spend, calculated from the account balance |
+| **Today**         | Spend so far in the current calendar day           |
+| **Last 7 days**   | Rolling seven-day spend                            |
+| **Last 30 days**  | Rolling 30-day spend                               |
+
+**Last 24 hours** and **Today** are different measures: one is a rolling window, the other resets at midnight.
+
+The low-balance alert threshold is also shown here. Edit it in place; the value is saved to your bar configuration.
+
+### Tokens tab
+
+See request and token totals for today, the last 7 days, and the last 30 days. The breakdown includes input, cached input, output, and total tokens. Proportional bars show each model’s share of token usage in each time window.
+
+### Models tab
+
+Browse the available models, sorted by input price, with details to help you choose:
+
+- Context window
+- Input, output, and cached-input prices per 1M tokens
+- A ⚡ mark for fast-serving variants
+- **NEW** beside models added since your cached catalogue was last updated
+
+The catalogue is cached on disk, so it appears immediately when the panel opens and refreshes when you visit the Models tab.
+
+### Keyboard controls
+
+`1` `2` `3` switch tabs · `←` `→` (or `h` `l`) move between tabs · `Esc` closes the panel · `Tab` moves to the neighbouring bar panel.
+
+When the low-balance threshold field is focused, it captures arrow keys and digits so typing `10` does not switch to tab 1.
+
+### Screenshots
+
+| Spend                           | Tokens                            | Models                            |
+| ------------------------------- | --------------------------------- | --------------------------------- |
+| ![Spend tab](.assets/tab-spend.png) | ![Tokens tab](.assets/tab-tokens.png) | ![Models tab](.assets/tab-models.png) |
 
 ## Configuration
 
-Three settings, all live in your bar configuration and all editable from
-Omarchy's own **Settings → Widgets** panel:
+Three settings are available in Omarchy’s **Settings → Widgets** panel and can also be edited from the command line:
 
-| Setting              | Default | What it does                                                                                             |
-| -------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
-| `lowBalance`         | `3`     | Turn the figure urgent at or below this many dollars. Also editable on the Spend tab                     |
-| `refreshIntervalSec` | `300`   | How often the balance is re-read in the background, 30 s minimum                                         |
-| `openRefreshGapSec`  | `60`    | Opening the panel re-reads the balance only if the last read is older than this. `0` reads on every open |
+| Setting              | Default | What it does                                                                                  |
+| -------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| `lowBalance`         | `3`     | Highlight the balance at or below this many dollars. Also editable on the Spend tab.           |
+| `refreshIntervalSec` | `300`   | Background refresh interval in seconds (30-second minimum).                                    |
+| `openRefreshGapSec`  | `60`    | Refresh on panel open only if the last read is older than this. Set to `0` to refresh on every open. |
 
 ```bash
 omarchy bar set io.github.kematzy.openscale lowBalance 10 --json
@@ -134,30 +116,15 @@ omarchy bar set io.github.kematzy.openscale refreshIntervalSec 120 --json
 
 ## Privacy and safety
 
-A credit widget has no business touching your account, so this one doesn't:
+- **Read-only account access.** The plugin uses the CLI to read your balance, usage, and model catalogue. It does not create, rotate, or revoke API keys, move credit, or write to your OpenScale account.
+- **Credentials stay with the CLI.** The plugin does not read, copy, log, or cache your token or API key. `osc` manages device login; the widget requests data through the CLI.
+- **Local persistent data.** The model catalogue cache is stored in `~/.cache/omarchy/openscale/`. The low-balance threshold is saved to your bar configuration through `omarchy bar set`.
+- **No direct OpenScale network requests.** OpenScale traffic is handled by the `osc` CLI.
+- **Fixed commands.** The plugin starts commands with fixed arguments, such as `osc balance --json`, `models.sh --read`, and `omarchy bar set …`. Values you type are not interpolated into shell commands.
+- **No elevated privileges.** The plugin does not request elevated permissions.
+- **Visible errors.** If a read fails, the last successful balance remains visible and the error is shown in the tooltip or the tab’s footer.
 
-- **Read-only.** The only OpenScale operations are the CLI's own `balance`,
-  `usage` and `models` reads. The plugin never creates, rotates or revokes a key,
-  never moves credit, and never writes to your account.
-- **Your credentials stay the CLI's.** The plugin never reads, copies, logs or
-  caches a token or API key. `osc` owns the device login; the widget just asks it
-  questions.
-- **Only two things are ever written**, both local: a cache of the public model
-  catalogue in `~/.cache/omarchy/openscale/`, and — when you edit it — the
-  low-balance value in your own bar configuration, through `omarchy bar set`.
-- **No hidden network calls.** The plugin speaks to nothing directly; all
-  traffic is the `osc` CLI talking to OpenScale.
-- **Fixed commands only.** Every process it starts uses a constant argv
-  (`osc balance --json`, `models.sh --read`, `omarchy bar set …`, `xdg-open
-  <link>`); nothing you type is interpolated into a shell command.
-- **No stored secrets, no elevated privileges**, and no writes outside your home
-  directory. The catalogue cache is public data — ids, limits, list prices.
-- **It fails visibly.** A failed read keeps the last good figure on screen and
-  says why in the tooltip or the tab's footer line, rather than blanking out.
-
-The plugin runs inside `omarchy-shell`, as all bar widgets do. If you want to
-audit it before enabling, the whole thing is a dozen QML files plus one shell
-script — start with `Service.qml`, `Usage.qml` and `models.sh`.
+The plugin runs inside `omarchy-shell`, like other bar widgets. To audit it before enabling, start with `Service.qml`, `Usage.qml`, and `models.sh`.
 
 ## Updating and removing
 
@@ -166,8 +133,7 @@ omarchy plugin update io.github.kematzy.openscale
 omarchy plugin remove io.github.kematzy.openscale
 ```
 
-Removing the plugin leaves `~/.cache/omarchy/openscale/models.json` behind; it is
-harmless and safe to delete:
+Removing the plugin leaves `~/.cache/omarchy/openscale/models.json` behind. It is harmless and safe to delete:
 
 ```bash
 rm -rf ~/.cache/omarchy/openscale
@@ -175,32 +141,24 @@ rm -rf ~/.cache/omarchy/openscale
 
 ## Contributing
 
-Issues and pull requests are welcome. Before opening a PR:
+Issues and pull requests are welcome. Before opening a PR, validate the plugin:
 
 ```bash
 omarchy plugin validate .
 ```
 
-and, if you have the shell's QML kit on disk, the lint described in
-[docs/README.md](docs/README.md#checks). Keep changes focused and match the
-surrounding style — the code is commented for a reason.
+If you have the shell’s QML kit on disk, run the lint described in [docs/README.md](docs/README.md#checks). Keep changes focused and follow the surrounding style; the code is commented for a reason.
 
-## Licence
+## License
 
 [MIT](LICENSE).
 
 ## Credits
 
-- **[OpenScale](https://openscale.so)** — the models, the API and the `osc` CLI
-  this plugin is a window onto.
-- **[Omarchy](https://omarchy.org)** — the desktop, its shell, and the `qs.Ui`
-  component kit the panel is built from.
-- **[Omarchy.OpenRouter](https://github.com/SpoilHeap/Omarchy.OpenRouter)** by
-  SpoilHeap — the reference for what a bar widget with a popup should look like,
-  and the source of several good ideas about handling a balance that comes from a
-  CLI-ish source.
+- **[OpenScale](https://openscale.so)** — the models, API, and `osc` CLI this plugin uses. This is an independent community plugin and is not affiliated with OpenScale.
+- **[Omarchy](https://omarchy.org)** — the desktop, its shell, and the `qs.Ui` component kit used to build the panel.
+- **Omarchy plugin authors** — many Omarchy plugins have served as useful references for bar widgets and popup panels.
 
 ## Technical documentation
 
-Architecture, data sources, refresh and caching policy, the Omarchy plugin
-mechanics, and how to work on the code: **[docs/README.md](docs/README.md)**.
+For architecture, data sources, refresh and caching policies, Omarchy plugin mechanics, and development notes, see **[docs/README.md](docs/README.md)**.
