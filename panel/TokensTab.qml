@@ -23,6 +23,10 @@ ColumnLayout {
   property var ui: null
   property var usage: null
 
+  // True when the usage loader's failure leaves nothing to show at all — the
+  // sign-in case. Transient failures stay in the status strip instead.
+  readonly property bool blocked: !!root.usage && Format.isBlocking(root.usage.error)
+
   readonly property var metricLabels: ["Requests", "Input", "Cached", "Output", "Total"]
 
   // The window name is now the row's first column rather than a line of its
@@ -63,8 +67,21 @@ ColumnLayout {
 
   spacing: Style.space(12)
 
+  TabMessage {
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+    visible: root.blocked
+    ui: root.ui
+    glyph: "\uF023"
+    title: "Not signed in"
+    detail: "OpenScale needs an authenticated session. Run osc login in a terminal."
+    actionLabel: "RUN OSC LOGIN"
+    onActionTriggered: Util.execArgv(["omarchy-launch-terminal", "osc", "login"])
+  }
+
   Text {
     Layout.fillWidth: true
+    visible: !root.blocked
     text: "Token Usage"
     color: root.ui.fg
     font.family: root.ui.fontFamily
@@ -78,6 +95,7 @@ ColumnLayout {
   RowLayout {
     Layout.fillWidth: true
     Layout.rightMargin: root.scrollGutter
+    visible: !root.blocked
     spacing: Style.space(4)
 
     // Empty, but laid out exactly like the title column below it, so the
@@ -108,6 +126,7 @@ ColumnLayout {
 
   PanelSeparator {
     Layout.fillWidth: true
+    visible: !root.blocked
     foreground: root.ui.fg
     strength: root.ui.ruleFaint
   }
@@ -117,6 +136,7 @@ ColumnLayout {
   Item {
     Layout.fillWidth: true
     Layout.fillHeight: true
+    visible: !root.blocked
 
     Flickable {
       id: view
@@ -173,6 +193,7 @@ ColumnLayout {
   // Closes the scroll area.
   PanelSeparator {
     Layout.fillWidth: true
+    visible: !root.blocked
     foreground: root.ui.fg
     strength: root.ui.ruleStrong
   }

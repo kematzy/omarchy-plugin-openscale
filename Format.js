@@ -118,6 +118,12 @@ function relativeStamp(seconds) {
     + pad(d.getHours()) + ":" + pad(d.getMinutes())
 }
 
+// True when the failure means there is no data to show at all, as opposed to
+// one stale window.
+function isBlocking(message) {
+  return /not signed in|unauthorized|command not found|no such file/i.test(String(message || ""))
+}
+
 // Turns whatever a CLI printed on failure into one readable line.
 //
 // `osc` reports errors as JSON — {"error": {"code", "exit", "message"}} — so

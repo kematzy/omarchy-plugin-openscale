@@ -56,6 +56,10 @@ ColumnLayout {
   // nothing to list yet, so the list makes way for a loading note.
   readonly property bool firstRun: root.models.length === 0 && root.error === ""
 
+  // True when the catalogue loader's failure leaves nothing to show — the
+  // sign-in case. Transient failures stay in the status strip instead.
+  readonly property bool blocked: Format.isBlocking(root.error)
+
   // Base widths of the figure columns. Each column is fixed so the figures
   // line up from row to row; the flexible name column takes the surplus, which
   // is what spreads the four figures across the full width and lands the last
@@ -205,8 +209,21 @@ ColumnLayout {
     return separator >= 0 ? name.slice(0, separator) : "Other"
   }
 
+  TabMessage {
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+    visible: root.blocked
+    ui: root.ui
+    glyph: "\uF023"
+    title: "Not signed in"
+    detail: "OpenScale needs an authenticated session. Run osc login in a terminal."
+    actionLabel: "RUN OSC LOGIN"
+    onActionTriggered: Util.execArgv(["omarchy-launch-terminal", "osc", "login"])
+  }
+
   Text {
     Layout.fillWidth: true
+    visible: !root.blocked
     text: "Available Models"
     color: root.ui.fg
     font.family: root.ui.fontFamily
@@ -218,6 +235,7 @@ ColumnLayout {
   // other outlined control.
   Rectangle {
     Layout.fillWidth: true
+    visible: !root.blocked
     implicitHeight: Style.space(28)
     color: "transparent"
 
@@ -269,7 +287,7 @@ ColumnLayout {
   // scrollbar's lane.
   RowLayout {
     Layout.fillWidth: true
-    visible: !root.firstRun
+    visible: !root.firstRun && !root.blocked
     Layout.rightMargin: root.scrollGutter
     spacing: Style.space(8)
 
@@ -331,7 +349,7 @@ ColumnLayout {
 
   PanelSeparator {
     Layout.fillWidth: true
-    visible: !root.firstRun
+    visible: !root.firstRun && !root.blocked
     foreground: root.ui.fg
     strength: root.ui.ruleFaint
   }
@@ -345,6 +363,7 @@ ColumnLayout {
   Item {
     Layout.fillWidth: true
     Layout.fillHeight: true
+    visible: !root.blocked
 
     ListView {
       id: view

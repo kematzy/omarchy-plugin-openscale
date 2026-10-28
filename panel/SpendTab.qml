@@ -33,10 +33,27 @@ ColumnLayout {
   // Panel.qml's `blocked: spendTab.editing`.
   readonly property bool editing: false
 
+  // True when the usage loader's failure leaves nothing to show at all — the
+  // sign-in case. Transient failures stay in the status strip instead.
+  readonly property bool blocked: !!root.usage && Format.isBlocking(root.usage.error)
+
   spacing: Style.space(12)
+
+  TabMessage {
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+    visible: root.blocked
+    ui: root.ui
+    glyph: "\uF023"
+    title: "Not signed in"
+    detail: "OpenScale needs an authenticated session. Run osc login in a terminal."
+    actionLabel: "RUN OSC LOGIN"
+    onActionTriggered: Util.execArgv(["omarchy-launch-terminal", "osc", "login"])
+  }
 
   Text {
     Layout.fillWidth: true
+    visible: !root.blocked
     text: "Spending Overview"
     color: root.ui.fg
     font.family: root.ui.fontFamily
@@ -46,6 +63,7 @@ ColumnLayout {
 
   ColumnLayout {
     Layout.fillWidth: true
+    visible: !root.blocked
     spacing: Style.space(4)
 
     PanelSectionHeader {
@@ -84,17 +102,20 @@ ColumnLayout {
 
   Item {
     Layout.fillHeight: true
+    visible: !root.blocked
   }
 
   // ---- Low balance ---------------------------------------------------------
   PanelSeparator {
     Layout.fillWidth: true
+    visible: !root.blocked
     foreground: root.ui.fg
     strength: root.ui.ruleStrong
   }
 
   RowLayout {
     Layout.fillWidth: true
+    visible: !root.blocked
     spacing: Style.space(12)
 
     ColumnLayout {
