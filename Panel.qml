@@ -147,6 +147,17 @@ Panel {
           lowCredit: root.lowCredit
           busy: root.balanceRefreshing
           ui: theme
+          balanceUsd: root.hostWidget ? root.hostWidget.balanceUsd : -1
+          dailyRateUsd: (root.usage && root.usage.week && root.usage.week.costUsd > 0)
+            ? root.usage.week.costUsd / 7 : -1
+        }
+
+        LowBalanceBanner {
+          Layout.fillWidth: true
+          visible: root.lowCredit
+          ui: theme
+          onAddCreditsRequested: Util.execArgv(["xdg-open",
+            "https://app.openscale.so/app?credits=open"])
         }
 
         // ---- Tab bar -------------------------------------------------------

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import qs.Commons
+import qs.Ui
 
 // Panel header, shown above the tabs on every tab: the brand lockup on the
 // left, the credit balance on the right with its caption beneath it.
@@ -31,10 +32,13 @@ RowLayout {
   property url logoSrc: Qt.resolvedUrl("../assets/openscale-logo.svg")
   // Painted height of the lockup; the width follows the asset's aspect ratio.
   property real logoHeight: Style.space(30)
-  // Nudges the figure block down so the figure lines up with the lockup.
-  property real balanceOffset: Style.space(4)
 
   property var ui: null
+
+  // Average daily spend over the last 7 days, and the resulting runway. Both
+  // -1 when the usage loader has not answered yet.
+  property real dailyRateUsd: -1
+  property real balanceUsd: -1
 
   // Intrinsic size of assets/openscale-logo.svg (213 x 47).
   readonly property real logoAspect: 213 / 47
@@ -42,8 +46,17 @@ RowLayout {
 
   readonly property color amountColor: root.lowCredit ? root.ui.urgent : root.ui.fg
 
+  // "~14 days left · $0.73/day (7-day average)". Empty when there is not
+  // enough data to say anything true.
+  readonly property string runwayText: {
+    if (root.dailyRateUsd <= 0 || root.balanceUsd < 0) return ""
+    var days = Math.floor(root.balanceUsd / root.dailyRateUsd)
+    return "~" + days + (days === 1 ? " day" : " days") + " left · $"
+      + root.dailyRateUsd.toFixed(2) + "/day (7-day average)"
+  }
+
   spacing: Style.space(8)
-  implicitHeight: Math.max(root.logoHeight, balanceBox.implicitHeight)
+  implicitHeight: Math.max(logoColumn.implicitHeight, balanceBox.implicitHeight)
 
   onBusyChanged: {
     if (busy) spinnerTail.stop()
@@ -65,11 +78,12 @@ RowLayout {
     text: "$999.99"
   }
 
-  Item {
-    id: logoBox
-    Layout.preferredWidth: root.logoWidth
-    Layout.preferredHeight: root.logoHeight
-    Layout.alignment: Qt.AlignVCenter
+  // The lockup and its URL line, wrapped so both read as one link: one hover
+  // handler and one click target cover the whole column.
+  ColumnLayout {
+    id: logoColumn
+    Layout.alignment: Qt.AlignTop
+    spacing: Style.space(4)
 
     HoverHandler {
       id: logoHover
@@ -84,26 +98,57 @@ RowLayout {
       onClicked: Util.execArgv(["xdg-open", "https://openscale.so"])
     }
 
-    Image {
-      id: logo
-      anchors.fill: parent
-      source: root.logoSrc
-      // 2x the painted size so the lockup stays crisp on HiDPI outputs; SVGs
-      // rasterise at sourceSize.
-      sourceSize.width: Math.round(root.logoWidth * 2)
-      sourceSize.height: Math.round(root.logoHeight * 2)
-      fillMode: Image.PreserveAspectFit
-      // Kept as a hidden layer so the effect below can sample it as a texture.
-      visible: false
-      layer.enabled: true
+    Item {
+      id: logoBox
+      Layout.preferredWidth: root.logoWidth
+      Layout.preferredHeight: root.logoHeight
+
+      Image {
+        id: logo
+        anchors.fill: parent
+        source: root.logoSrc
+        // 2x the painted size so the lockup stays crisp on HiDPI outputs; SVGs
+        // rasterise at sourceSize.
+        sourceSize.width: Math.round(root.logoWidth * 2)
+        sourceSize.height: Math.round(root.logoHeight * 2)
+        fillMode: Image.PreserveAspectFit
+        // Kept as a hidden layer so the effect below can sample it as a texture.
+        visible: false
+        layer.enabled: true
+      }
+
+      MultiEffect {
+        anchors.fill: parent
+        source: logo
+        colorization: 1.0
+        // Hover brings the lockup up to the figure's colour, so it reads as a link.
+        colorizationColor: logoHover.hovered ? root.ui.fg : root.ui.decor
+      }
     }
 
-    MultiEffect {
-      anchors.fill: parent
-      source: logo
-      colorization: 1.0
-      // Hover brings the lockup up to the figure's colour, so it reads as a link.
-      colorizationColor: logoHover.hovered ? root.ui.fg : root.ui.decor
+    RowLayout {
+      spacing: Style.space(4)
+
+      Text {
+        text: "https://openscale.so"
+        color: logoHover.hovered ? root.ui.accent : root.ui.caption
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.caption
+      }
+
+      // Appears on hover: says the click leaves the desktop for a browser.
+      Text {
+        visible: logoHover.hovered
+        text: "\u2197"
+        color: root.ui.accent
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.caption
+      }
+    }
+
+    PanelToolTip {
+      visible: logoHover.hovered
+      text: "Open the OpenScale website in your default browser"
     }
   }
 
@@ -114,15 +159,14 @@ RowLayout {
 
   Item {
     id: balanceBox
-    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+    Layout.alignment: Qt.AlignRight | Qt.AlignTop
     implicitWidth: balance.implicitWidth
     implicitHeight: balance.implicitHeight
 
     ColumnLayout {
       id: balance
       anchors.right: parent.right
-      anchors.verticalCenter: parent.verticalCenter
-      anchors.verticalCenterOffset: root.balanceOffset
+      anchors.top: parent.top
       // Extra room between the figure and its caption: the caption reads as a
       // label under the figure, not as a second line of it.
       spacing: Style.space(4)
@@ -170,6 +214,13 @@ RowLayout {
 
           Behavior on color {
             ColorAnimation { duration: 160 }
+          }
+
+          HoverHandler { id: amountHover }
+
+          PanelToolTip {
+            visible: amountHover.hovered && root.runwayText !== ""
+            text: root.runwayText
           }
         }
       }
