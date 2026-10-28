@@ -6,8 +6,8 @@ import qs.Commons
 //
 // Extends QtQuick.Controls' TabButton so selection stays driven by the parent
 // TabBar (`checked` comes from the attached TabBar.index), and replaces the
-// default style's chrome with theme tokens: a faint wash on hover, a deeper
-// wash of the same colour when selected, nothing otherwise.
+// default style's chrome with theme tokens: a faint wash on hover, an accent
+// underline on the selected tab, nothing otherwise.
 TabButton {
   id: root
 
@@ -16,14 +16,10 @@ TabButton {
   // loading. Panel.qml binds it to the usage loader for Spend and Tokens, and
   // to the catalogue's own loading flag for Models.
   property bool busy: false
+  // Numeral shown in the tab's top-right corner; 0 hides it.
+  property int shortcut: 0
 
   // Square tabs, not pills: no radius on any state, by preference.
-  readonly property color hoverColor: root.ui.hoverWash
-  // Selected is the same foreground wash as hover, only deeper, so the active
-  // tab reads as "the one you are on" rather than as a differently coloured
-  // control. The accent stays on the label.
-  readonly property color activeColor: root.ui.accentWash
-
   // Fixed height so the strip is one band; the width has a floor of 84 so a
   // short label still gives a comfortable target, and grows with a longer one.
   // The TabBar shares the panel width between the tabs.
@@ -35,9 +31,18 @@ TabButton {
   }
 
   background: Rectangle {
-    color: root.checked
-      ? root.activeColor
-      : (hover.hovered ? root.hoverColor : "transparent")
+    color: hover.hovered && !root.checked ? root.ui.hoverWash : "transparent"
+
+    // Active-tab marker. Echoes the bar's own open-widget indicator, so the
+    // panel points back at the control that opened it.
+    Rectangle {
+      anchors.bottom: parent.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: Style.space(2)
+      visible: root.checked
+      color: root.ui.accent
+    }
   }
 
   contentItem: Item {
@@ -71,7 +76,7 @@ TabButton {
       id: label
       anchors.centerIn: parent
       text: root.text
-      color: root.checked ? root.ui.accent : root.ui.fg
+      color: root.checked ? root.ui.accent : root.ui.label
       font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
       font.capitalization: Font.AllUppercase
@@ -80,6 +85,20 @@ TabButton {
       horizontalAlignment: Text.AlignHCenter
       verticalAlignment: Text.AlignVCenter
       elide: Text.ElideRight
+    }
+
+    // The 1/2/3 shortcuts work whether or not this is shown; the numeral is
+    // the only thing that says so.
+    Text {
+      anchors.right: parent.right
+      anchors.rightMargin: Style.space(4)
+      anchors.top: parent.top
+      anchors.topMargin: Style.space(4)
+      visible: root.shortcut > 0
+      text: String(root.shortcut)
+      color: root.ui.decor
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.caption
     }
   }
 }

@@ -187,6 +187,7 @@ Panel {
 
             Tab {
               text: "Spend"
+              shortcut: 1
               // Both usage tabs are fed by one loader, so both spin while it
               // is fetching.
               busy: root.usage ? root.usage.loading : false
@@ -194,6 +195,7 @@ Panel {
             }
             Tab {
               text: "Tokens"
+              shortcut: 2
               busy: root.usage ? root.usage.loading : false
               ui: theme
             }
@@ -201,8 +203,16 @@ Panel {
               text: "Models"
               // Spins only while the catalogue is actually being fetched.
               busy: modelsTab.loading
+              shortcut: 3
               ui: theme
             }
+          }
+
+          // Closes the strip — the rule above it opens it.
+          PanelSeparator {
+            Layout.fillWidth: true
+            foreground: theme.fg
+            strength: theme.ruleStrong
           }
         }
 
