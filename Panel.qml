@@ -116,8 +116,12 @@ Panel {
     // Anchored under the bar button rather than centred on the screen.
     centerOnBar: false
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(420))
+    contentWidth: panel.fittedContentWidth(Style.space(460))
     contentHeight: panel.fittedContentHeight(root.contentHeightTarget)
+
+    Behavior on contentHeight {
+      NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+    }
 
     PanelKeyCatcher {
       id: keyCatcher
