@@ -3,15 +3,15 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Io
 import qs.Commons
+import qs.Ui
 import "../Format.js" as Format
 
-// "Models" tab: two-line blocks, one per model, cheapest first.
+// "Models" tab: one line per model, grouped under vendor headers, filtered as
+// you type.
 //
-// A six-column table could only fit by shrinking everything to 11px, because
-// the model name alone wants most of a 420px row. Giving each model two lines
-// lets the name be read at subtitle size and the figures at body size, while
-// the four figures stay in fixed-width groups so they still line up from row to
-// row for comparison.
+// One line per model keeps the four figures in fixed-width columns that line
+// up from row to row for comparison, and a ListView recycles delegates so a
+// long catalogue scrolls without instantiating every row at once.
 //
 // The list comes from the on-disk catalogue cache via models.sh: read once when
 // the panel builds its tabs, refreshed when the Models tab is shown and the
@@ -22,10 +22,6 @@ ColumnLayout {
   id: root
 
   property var ui: null
-
-  // Cheapest first. "input" | "output" | "context" — the hook for clickable
-  // sorting when the tab gains it; nothing sets it yet.
-  property string sortKey: "input"
 
   // Filled from the on-disk cache when the tab is created. Refresh only after
   // the cached catalogue is 24 hours old. The cache lives at
@@ -50,19 +46,60 @@ ColumnLayout {
   readonly property string helperPath: String(Qt.resolvedUrl("../models.sh"))
     .replace(/^file:\/\//, "")
 
-  // Base widths of the figure columns. Each column is fixed so the figures
-  // line up from row to row; the gaps between them are flexible, which is what
-  // spreads the four figures across the full width and lands the last value on
-  // the right edge.
-  readonly property real columnContext: Style.space(58)
-  readonly property real columnInput: Style.space(60)
-  readonly property real columnOutput: Style.space(68)
-  readonly property real columnCached: Style.space(92)
+  // What the filter field holds; "" shows everything.
+  property string filter: ""
+  // True while the filter field has the keyboard. Panel.qml blocks its key
+  // catcher on this so typing reaches the field instead of changing tabs.
+  readonly property bool editing: filterInput.activeFocus
 
-  readonly property var rows: root.sortedModels()
-  readonly property string sortCaption: root.sortKey === "output"
-    ? "cheapest output first"
-    : (root.sortKey === "context" ? "smallest context first" : "cheapest input first")
+  // True before any catalogue has arrived and nothing has failed: there is
+  // nothing to list yet, so the list makes way for a loading note.
+  readonly property bool firstRun: root.models.length === 0 && root.error === ""
+
+  // Base widths of the figure columns. Each column is fixed so the figures
+  // line up from row to row; the flexible name column takes the surplus, which
+  // is what spreads the four figures across the full width and lands the last
+  // value on the right edge.
+  readonly property real columnContext: Style.space(48)
+  readonly property real columnInput: Style.space(56)
+  readonly property real columnOutput: Style.space(56)
+  readonly property real columnCached: Style.space(56)
+
+  // A flat list of header and model entries, so one ListView can render both.
+  // Vendors are alphabetical; models inside a vendor are cheapest-input first.
+  readonly property var rows: {
+    var needle = String(root.filter || "").toLowerCase()
+    var groups = ({})
+    for (var i = 0; i < (root.models ? root.models.length : 0); i++) {
+      var m = root.models[i]
+      if (!m) continue
+      if (needle !== "") {
+        var hay = (String(m.name || "") + " " + String(m.id || "")).toLowerCase()
+        if (hay.indexOf(needle) === -1) continue
+      }
+      var vendor = root.vendorOf(m)
+      if (!groups[vendor]) groups[vendor] = []
+      groups[vendor].push(m)
+    }
+
+    var vendors = Object.keys(groups).sort(function(a, b) { return a.localeCompare(b) })
+    var out = []
+    for (var v = 0; v < vendors.length; v++) {
+      var list = groups[vendors[v]]
+      list.sort(function(a, b) {
+        var ap = (a.usdPerMillion && a.usdPerMillion.input) || 0
+        var bp = (b.usdPerMillion && b.usdPerMillion.input) || 0
+        if (ap !== bp) return ap - bp
+        return String(a.id).localeCompare(String(b.id))
+      })
+      out.push({ isHeader: true, vendor: vendors[v], model: null })
+      for (var k = 0; k < list.length; k++) {
+        out.push({ isHeader: false, vendor: vendors[v], model: list[k],
+                   last: k === list.length - 1 })
+      }
+    }
+    return out
+  }
 
   spacing: Style.space(8)
 
@@ -144,209 +181,316 @@ ColumnLayout {
     error = ""
   }
 
-
-  function sortedModels() {
-    var list = []
-    for (var i = 0; i < (models ? models.length : 0); i++) list.push(models[i])
-    var key = root.sortKey
-    list.sort(function(a, b) {
-      var av = root.sortValue(a, key)
-      var bv = root.sortValue(b, key)
-      if (av !== bv) return av - bv
-      // Tiebreak on the id so equal prices keep a predictable order.
-      return String(a.id).localeCompare(String(b.id))
-    })
-    return list
-  }
-
-  function sortValue(model, key) {
-    if (!model) return 0
-    if (key === "context") return Number(model.context) || 0
-    var prices = model.usdPerMillion || {}
-    return Number(prices[key]) || 0
-  }
-
-  // Names arrive as "Vendor: Model"; the vendor is redundant inside a table of
-  // models, so only the model part is shown. Anything without that prefix is
-  // left alone.
+  // Names arrive as "Vendor: Model" and sometimes carry a trailing "(fast)".
+  // The vendor is a group header now, and the lightning glyph already says
+  // "fast", so both are removed from the name itself.
   function shortName(model) {
     var name = String(model && model.name ? model.name : (model ? model.id : ""))
     var separator = name.indexOf(": ")
-    return separator >= 0 ? name.slice(separator + 2) : name
+    if (separator >= 0) name = name.slice(separator + 2)
+    return name.replace(/\s*\(fast\)\s*$/i, "")
   }
 
+  // "Vendor" from "Vendor: Model"; "Other" when the name carries no prefix.
+  function vendorOf(model) {
+    var name = String(model && model.name ? model.name : "")
+    var separator = name.indexOf(": ")
+    return separator >= 0 ? name.slice(0, separator) : "Other"
+  }
 
+  Text {
+    Layout.fillWidth: true
+    text: "Available Models"
+    color: root.ui.fg
+    font.family: root.ui.fontFamily
+    font.pixelSize: Style.font.title
+    font.bold: true
+  }
 
-  // Label in caption, figure in body: the label says what the number is, so the
-  // table needs no header row and no abbreviation legend. The value is pushed
-  // to the column's right edge, so figures in a column end on one line.
-  //
-  // Deliberately a plain Item with two Texts rather than a nested RowLayout: a
-  // layout nested in a layout reports an unlimited preferred width, so it
-  // absorbs the row's surplus and the flexible gaps collapse to zero.
-  component Figure: Item {
-    id: figure
-    property string label: ""
-    property string value: ""
-
-    readonly property real labelGap: Style.space(4)
-
-    implicitWidth: labelText.implicitWidth + labelGap + valueText.implicitWidth
-    implicitHeight: Math.max(labelText.implicitHeight, valueText.implicitHeight)
+  // Borderless, square, with a focus rule rather than a box: the panel has no
+  // other outlined control.
+  Rectangle {
+    Layout.fillWidth: true
+    implicitHeight: Style.space(28)
+    color: "transparent"
 
     Text {
-      id: labelText
-      text: figure.label
+      id: searchIcon
+      anchors.left: parent.left
+      anchors.verticalCenter: parent.verticalCenter
+      text: "\uF002"
       color: root.ui.label
       font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
-      // Sit on the same baseline as the figure beside it, whatever the two
-      // sizes are.
-      y: valueText.y + (valueText.baselineOffset - labelText.baselineOffset)
     }
 
-    Text {
-      id: valueText
-      text: figure.value
+    TextInput {
+      id: filterInput
+      anchors.left: searchIcon.right
+      anchors.leftMargin: Style.space(8)
+      anchors.right: parent.right
+      anchors.verticalCenter: parent.verticalCenter
       color: root.ui.fg
       font.family: root.ui.fontFamily
-      font.pixelSize: Style.font.title
-      horizontalAlignment: Text.AlignRight
-      x: labelText.implicitWidth + figure.labelGap
-      width: Math.max(0, figure.width - x)
+      font.pixelSize: Style.font.bodySmall
+      selectByMouse: true
+      onTextChanged: root.filter = text
+      Keys.onEscapePressed: { text = ""; focus = false }
+
+      Text {
+        anchors.fill: parent
+        visible: filterInput.text === ""
+        text: "Filter models"
+        color: root.ui.caption
+        font: filterInput.font
+      }
+    }
+
+    PanelSeparator {
+      anchors.bottom: parent.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      foreground: filterInput.activeFocus ? root.ui.accent : root.ui.fg
+      strength: filterInput.activeFocus ? 1.0 : root.ui.ruleFaint
+      height: filterInput.activeFocus ? Style.space(2) : 1
     }
   }
 
-  // The list scrolls only when the catalogue outgrows the panel: the seven
-  // current blocks nearly fill the tab's height, so clipping an eighth silently
-  // would be worse than a scrollbar. The legend stays pinned below.
-  Flickable {
-    id: view
-
+  // Pinned column header. The MODEL cell plays the name column: flexible,
+  // taking the same surplus the rows' names take, so the four figure columns
+  // land on the same edges as the rows below.
+  RowLayout {
     Layout.fillWidth: true
-    Layout.fillHeight: true
-    contentWidth: width
-    contentHeight: list.implicitHeight
-    clip: true
-    boundsBehavior: Flickable.StopAtBounds
-    flickableDirection: Flickable.VerticalFlick
-    interactive: contentHeight > height
+    visible: !root.firstRun
+    spacing: Style.space(8)
 
-    ScrollBar.vertical: ScrollBar {
-      policy: ScrollBar.AsNeeded
+    Text {
+      Layout.fillWidth: true
+      text: "MODEL"
+      color: root.ui.label
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.caption
+      font.capitalization: Font.AllUppercase
+      font.letterSpacing: 0.8
+      horizontalAlignment: Text.AlignLeft
     }
 
-    ColumnLayout {
-      id: list
+    Text {
+      Layout.preferredWidth: root.columnContext
+      text: "CTX"
+      color: root.ui.label
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.caption
+      font.capitalization: Font.AllUppercase
+      font.letterSpacing: 0.8
+      horizontalAlignment: Text.AlignRight
+    }
 
-      width: view.width
-      // Blocks read as separate entries: the base gap plus the extra air the
-      // larger name line wants.
-      spacing: Style.space(16)
+    Text {
+      Layout.preferredWidth: root.columnInput
+      text: "IN"
+      color: root.ui.label
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.caption
+      font.capitalization: Font.AllUppercase
+      font.letterSpacing: 0.8
+      horizontalAlignment: Text.AlignRight
+    }
 
-      Repeater {
-        model: root.rows
+    Text {
+      Layout.preferredWidth: root.columnOutput
+      text: "OUT"
+      color: root.ui.label
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.caption
+      font.capitalization: Font.AllUppercase
+      font.letterSpacing: 0.8
+      horizontalAlignment: Text.AlignRight
+    }
 
-        delegate: ColumnLayout {
-          id: block
-          required property var modelData
+    Text {
+      Layout.preferredWidth: root.columnCached
+      text: "CACHE"
+      color: root.ui.label
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.caption
+      font.capitalization: Font.AllUppercase
+      font.letterSpacing: 0.8
+      horizontalAlignment: Text.AlignRight
+    }
+  }
 
+  PanelSeparator {
+    Layout.fillWidth: true
+    visible: !root.firstRun
+    foreground: root.ui.fg
+    strength: root.ui.ruleFaint
+  }
+
+  // The list scrolls only when the catalogue outgrows the panel: clipping a
+  // model silently would be worse than a scrollbar. Errors and the timestamp
+  // live in the shared status strip below, not here.
+  //
+  // Plain-Item wrapper so the fade can anchor to the ListView without
+  // fighting the ColumnLayout for position.
+  Item {
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+
+    ListView {
+      id: view
+
+      anchors.fill: parent
+      visible: !root.firstRun
+      clip: true
+      boundsBehavior: Flickable.StopAtBounds
+      model: root.rows
+      spacing: 0
+
+      ScrollBar.vertical: ScrollBar {
+        policy: view.contentHeight > view.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+      }
+
+      delegate: Loader {
+        required property var modelData
+        width: view.width
+        sourceComponent: modelData.isHeader ? vendorHeader : modelRow
+        property var entry: modelData
+      }
+    }
+
+    // Says "there is more below" on a popup the user may never hover, which is
+    // what ScrollBar.AsNeeded cannot do.
+    Rectangle {
+      anchors.left: view.left
+      anchors.right: view.right
+      anchors.bottom: view.bottom
+      height: Style.space(16)
+      visible: view.contentHeight > view.height
+        && view.contentY < view.contentHeight - view.height - 1
+      gradient: Gradient {
+        GradientStop { position: 0.0; color: "transparent" }
+        GradientStop { position: 1.0; color: root.ui.surface }
+      }
+    }
+
+    // First run: nothing fetched yet and nothing failed. Errors go to the
+    // status strip instead of blanking the tab.
+    Text {
+      anchors.centerIn: parent
+      visible: root.firstRun
+      text: "Loading models…"
+      color: root.ui.caption
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.bodySmall
+    }
+  }
+
+  // Vendor group header. Same device the Spend tab uses for ROLLING/CALENDAR,
+  // so the two lists read the same way.
+  Component {
+    id: vendorHeader
+    Item {
+      implicitHeight: Style.space(28)
+      width: parent ? parent.width : 0
+      Text {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Style.space(4)
+        text: parent.parent.entry.vendor.toUpperCase()
+        color: root.ui.label
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.caption
+        font.bold: true
+        font.letterSpacing: 0.8
+      }
+    }
+  }
+
+  Component {
+    id: modelRow
+    Item {
+      id: rowItem
+      readonly property var entry: parent.entry
+      readonly property var m: rowItem.entry.model
+      implicitHeight: Style.space(24)
+      width: parent ? parent.width : 0
+
+      RowLayout {
+        anchors.fill: parent
+        spacing: Style.space(8)
+
+        Text {
           Layout.fillWidth: true
-          // Room between the name and the figures under it, so the two lines
-          // read as one block rather than as two unrelated rows.
-          spacing: Style.space(8)
-
-          RowLayout {
-            Layout.fillWidth: true
-            spacing: Style.space(8)
-
-            Text {
-              Layout.fillWidth: false
-              // Fast serving belongs to the model, not to a figure to compare,
-              // so it sits at the end of the name. The name keeps its natural
-              // width — capped so a long one elides instead of pushing the
-              // glyph out — and the trailing spacer takes the surplus, which
-              // is what keeps the glyph next to the text.
-              Layout.maximumWidth: block.width
-                - (badge.visible ? badge.implicitWidth + Style.space(8) : 0)
-              text: root.shortName(block.modelData)
-              color: root.ui.fg
-              font.family: root.ui.fontFamily
-              font.pixelSize: Style.font.title
-              font.bold: true
-              elide: Text.ElideRight
-            }
-
-            // Not in the catalogue the cache held when the shell started.
-            Text {
-              visible: root.isNew(block.modelData)
-              text: "NEW"
-              color: root.ui.accent
-              font.family: root.ui.fontFamily
-              font.pixelSize: Style.font.caption
-              font.bold: true
-              font.letterSpacing: 0.8
-              Layout.alignment: Qt.AlignVCenter
-            }
-
-            Text {
-              id: badge
-              visible: block.modelData.fastMode === true
-              text: "\uF0E7"
-              color: root.ui.accent
-              font.family: root.ui.fontFamily
-              font.pixelSize: Style.font.bodySmall
-              Layout.alignment: Qt.AlignVCenter
-            }
-
-            Item {
-              Layout.fillWidth: true
-            }
-          }
-
-          RowLayout {
-            Layout.fillWidth: true
-            spacing: 0
-
-            Figure {
-              Layout.preferredWidth: root.columnContext
-              label: "Ctx"
-              value: Format.context(block.modelData.context)
-            }
-
-            // Flexible gaps: fixed content columns with the surplus shared
-            // equally between them, so the row spans the panel width.
-            Item {
-              Layout.fillWidth: true
-            }
-
-            Figure {
-              Layout.preferredWidth: root.columnInput
-              label: "In"
-              value: Format.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.input : -1)
-            }
-
-            Item {
-              Layout.fillWidth: true
-            }
-
-            Figure {
-              Layout.preferredWidth: root.columnOutput
-              label: "Out"
-              value: Format.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.output : -1)
-            }
-
-            Item {
-              Layout.fillWidth: true
-            }
-
-            Figure {
-              Layout.preferredWidth: root.columnCached
-              label: "Cache"
-              value: Format.money(block.modelData.usdPerMillion ? block.modelData.usdPerMillion.cached : -1)
-            }
-          }
+          text: root.shortName(rowItem.m)
+          color: root.ui.fg
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.bodySmall
+          elide: Text.ElideRight
         }
+
+        Text {
+          visible: root.isNew(rowItem.m)
+          text: "NEW"
+          color: root.ui.accent
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.caption
+          font.bold: true
+          font.letterSpacing: 0.8
+        }
+
+        Text {
+          visible: rowItem.m.fastMode === true
+          text: "\u26A1"
+          color: root.ui.accent
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.caption
+        }
+
+        Text {
+          Layout.preferredWidth: root.columnContext
+          text: Format.context(rowItem.m.context)
+          color: root.ui.fg
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.bodySmall
+          horizontalAlignment: Text.AlignRight
+        }
+
+        Text {
+          Layout.preferredWidth: root.columnInput
+          text: Format.price(rowItem.m.usdPerMillion ? rowItem.m.usdPerMillion.input : -1)
+          color: root.ui.fg
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.bodySmall
+          horizontalAlignment: Text.AlignRight
+        }
+
+        Text {
+          Layout.preferredWidth: root.columnOutput
+          text: Format.price(rowItem.m.usdPerMillion ? rowItem.m.usdPerMillion.output : -1)
+          color: root.ui.fg
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.bodySmall
+          horizontalAlignment: Text.AlignRight
+        }
+
+        Text {
+          Layout.preferredWidth: root.columnCached
+          text: Format.cachePrice(rowItem.m.usdPerMillion ? rowItem.m.usdPerMillion.cached : -1)
+          color: root.ui.fg
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.bodySmall
+          horizontalAlignment: Text.AlignRight
+        }
+      }
+
+      PanelSeparator {
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        visible: !rowItem.entry.last
+        foreground: root.ui.fg
+        strength: root.ui.ruleFaint
       }
     }
   }

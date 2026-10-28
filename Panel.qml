@@ -126,8 +126,9 @@ Panel {
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
-      // Let the Spend tab's number field keep its own keys while it is focused.
-      blocked: spendTab.editing
+      // Let the Spend tab's stepper and the Models tab's filter field keep
+      // their own keys while either is focused.
+      blocked: spendTab.editing || modelsTab.editing
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
       onMoveRequested: function(dx, dy) { if (dx !== 0) root.stepTab(dx) }

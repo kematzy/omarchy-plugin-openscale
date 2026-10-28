@@ -11,6 +11,25 @@ function money(value) {
   return "$" + amount.toFixed(2)
 }
 
+// Per-million prices. Two decimals hides every sub-cent price as "$0.00",
+// which is wrong rather than merely terse, so anything under a cent keeps
+// three decimals.
+function price(value) {
+  var amount = Number(value)
+  if (!isFinite(amount) || amount < 0) return "\u2014"
+  if (amount > 0 && amount < 0.01) return "$" + amount.toFixed(3)
+  return "$" + amount.toFixed(2)
+}
+
+// Cached-token price. Exactly zero means caching costs nothing, which is a
+// fact worth stating rather than printing as "$0.00".
+function cachePrice(value) {
+  var amount = Number(value)
+  if (!isFinite(amount) || amount < 0) return "\u2014"
+  if (amount === 0) return "Free"
+  return price(amount)
+}
+
 // 9,999 · 10.5K · 55K · 19.41M · 363.76M · 2M
 function count(value) {
   var n = Number(value)
