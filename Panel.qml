@@ -43,6 +43,7 @@ Panel {
   // it instead of holding the value it was handed on load.
   readonly property string creditText: hostWidget ? hostWidget.creditText : "—"
   readonly property bool lowCredit: hostWidget ? hostWidget.lowCredit === true : false
+  readonly property bool noCredit: hostWidget ? hostWidget.noCredit === true : false
   readonly property bool balanceRefreshing: hostWidget
     ? hostWidget.balanceRefreshing === true
     : false
@@ -146,6 +147,7 @@ Panel {
           Layout.fillWidth: true
           creditText: root.creditText
           lowCredit: root.lowCredit
+          noCredit: root.noCredit
           busy: root.balanceRefreshing
           ui: theme
           balanceUsd: root.hostWidget ? root.hostWidget.balanceUsd : -1

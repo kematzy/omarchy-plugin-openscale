@@ -22,6 +22,8 @@ RowLayout {
   // Set by the host when the credit is at or below its low-balance threshold,
   // so the threshold itself has one owner and this file stays presentational.
   property bool lowCredit: false
+  // One shade further than low: the credit is exhausted (zero).
+  property bool noCredit: false
   // Set by the host while a balance fetch is in flight.
   property bool busy: false
   // The fetch takes ~300 ms, which is over before the eye registers the
@@ -44,7 +46,8 @@ RowLayout {
   readonly property real logoAspect: 213 / 47
   readonly property real logoWidth: Math.round(root.logoHeight * root.logoAspect)
 
-  readonly property color amountColor: root.lowCredit ? root.ui.urgent : root.ui.fg
+  readonly property color amountColor: root.noCredit
+    ? root.ui.urgent : (root.lowCredit ? root.ui.warning : root.ui.fg)
 
   // "~14 days left · $0.73/day (7-day average)". Empty when there is not
   // enough data to say anything true.

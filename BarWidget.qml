@@ -30,8 +30,21 @@ BarWidget {
   // owner here keeps the bar button, the panel header and the Spend tab from
   // disagreeing about when the figure turns urgent.
   readonly property real lowBalance: Number(setting("lowBalance", 3))
-  readonly property bool lowCredit: balanceUsd >= 0 && balanceUsd <= lowBalance
+
+  // Traffic lights. Colour alone is not a signal — each state also changes the
+  // glyph, so the bar still reads when colour does not.
+  readonly property bool noCredit: balanceUsd >= 0 && balanceUsd <= 0
+  readonly property bool lowCredit: balanceUsd > 0 && balanceUsd <= lowBalance
+
   readonly property bool balanceRefreshing: service.refreshing
+
+  // The bar is a different surface from the popup, so this instance is seeded
+  // from the bar rather than reusing the panel's.
+  Theme {
+    id: theme
+    foregroundColor: root.bar ? root.bar.foreground : Commons.Color.foreground
+    surfaceColor: root.bar ? root.bar.background : Commons.Color.background
+  }
 
   // Called by Panel.qml when the popup opens: fetches the balance unless the
   // last good one is still fresh, so repeated open/close does not poll.
@@ -50,6 +63,27 @@ BarWidget {
       String(amount), "--json"]
     saveProcess.running = true
   }
+
+  // Fires once on the crossing into a low state, not on every poll. A
+  // threshold the user set themselves should announce itself rather than wait
+  // to be found.
+  property bool notifiedLow: false
+
+  // Both state changes funnel through here, so a poll that flips low → empty
+  // still notifies exactly once, at the severity the new state deserves.
+  function announceLowState() {
+    if (!lowCredit && !noCredit) { notifiedLow = false; return }
+    if (notifiedLow) return
+    notifiedLow = true
+    notifyProcess.command = ["notify-send", "--app-name=OpenScale",
+      "--urgency=" + (noCredit ? "critical" : "normal"),
+      noCredit ? "OpenScale credit exhausted" : "OpenScale credit is low",
+      creditText + " remaining"]
+    notifyProcess.running = true
+  }
+
+  onLowCreditChanged: announceLowState()
+  onNoCreditChanged: announceLowState()
 
   // ---- Panel lifecycle contract -------------------------------------------
   // Bar.findPanelWidget expects open/close/opened on this root, and the popout
@@ -120,6 +154,13 @@ BarWidget {
     }
   }
 
+  // Low-balance announcement, one-shot per crossing; see announceLowState().
+  Process {
+    id: notifyProcess
+
+    running: false
+  }
+
   Loader {
     id: panelLoader
     active: true
@@ -157,25 +198,55 @@ BarWidget {
     RowLayout {
       id: content
       anchors.centerIn: parent
-      spacing: Style.space(5)
+      spacing: Style.space(4)
 
       Image {
-        source: Qt.resolvedUrl("assets/openscale.svg")
-        // 2x the painted size so the mark stays crisp on HiDPI outputs.
-        sourceSize.width: Math.round(Style.space(14) * 2)
-        sourceSize.height: Math.round(Style.space(14) * 2)
+        id: mark
+        // Painted size of the brand mark; 2x sourceSize keeps it crisp on
+        // HiDPI outputs. At 14px the full mark's three nested squares blur
+        // into mush, so the simplified variant carries the motif instead.
+        property real paintedSize: Style.space(14)
+
+        source: Qt.resolvedUrl(paintedSize <= 16
+          ? "assets/openscale-mark-small.svg" : "assets/openscale.svg")
+        sourceSize.width: Math.round(paintedSize * 2)
+        sourceSize.height: Math.round(paintedSize * 2)
         fillMode: Image.PreserveAspectFit
-        Layout.preferredWidth: Style.space(14)
-        Layout.preferredHeight: Style.space(14)
+        Layout.preferredWidth: paintedSize
+        Layout.preferredHeight: paintedSize
+        Layout.alignment: Qt.AlignVCenter
+      }
+
+      TextMetrics {
+        id: amountMetrics
+        font: amountText.font
+        text: "$999.99"
+      }
+
+      Text {
+        visible: root.noCredit || root.lowCredit
+        // Warning triangle when low, no-entry when empty. Both are BMP
+        // codepoints: anything above U+FFFF needs a surrogate pair and is a
+        // reliable way to ship a tofu box.
+        text: root.noCredit ? "\uF05E" : "\uF071"
+        color: root.noCredit ? theme.urgent : theme.warning
+        font.family: button.fontFamily
+        font.pixelSize: button.fontSize
         Layout.alignment: Qt.AlignVCenter
       }
 
       Text {
+        id: amountText
         text: root.creditText
-        color: button.active ? button.activeColor : button.foreground
+        color: root.noCredit ? theme.urgent
+          : (root.lowCredit ? theme.warning : button.foreground)
         font.family: button.fontFamily
         font.pixelSize: button.fontSize
         renderType: Text.NativeRendering
+        // Never narrower than the widest figure, so the bar does not reflow
+        // between $0.00 and $999.99; the surplus sits on the left.
+        Layout.minimumWidth: amountMetrics.advanceWidth
+        horizontalAlignment: Text.AlignRight
         Layout.alignment: Qt.AlignVCenter
       }
     }
