@@ -17,12 +17,18 @@ ColumnLayout {
   property var links: [
     // The route `osc claim` opens: the app's own Add Credits dialog, rather
     // than the marketing site's /credits redirect through the login page.
-    { icon: "\uF067", label: "Credits", url: "https://app.openscale.so/app?credits=open" },
-    { icon: "\uF120", label: "Console", url: "https://app.openscale.so/app" },
-    { icon: "\uF02D", label: "Docs", url: "https://openscale.so/docs" }
+    { icon: "\uF067", label: "Credits", url: "https://app.openscale.so/app?credits=open", isPrimary: true,
+      tooltip: "Add more credits on the OpenScale's website" },
+    { icon: "\ueacd", label: "Dashboard", url: "https://app.openscale.so/app",
+      tooltip: "Open your OpenScale dashboard" },
+    { icon: "\uF02D", label: "Docs", url: "https://openscale.so/docs",
+      tooltip: "Open the OpenScale documentation" }
   ]
 
   property var ui: null
+  // When true, the primary link (Credits) is promoted to a filled button —
+  // the same moment the low-balance banner appears above the tabs.
+  property bool lowCredit: false
 
   spacing: Style.space(8)
 
@@ -45,11 +51,16 @@ ColumnLayout {
       delegate: Rectangle {
         id: link
         required property var modelData
+        // Only promoted when the balance is low; the rest of the time every
+        // button looks the same.
+        readonly property bool promoted: root.lowCredit && link.modelData.isPrimary === true
 
         Layout.fillWidth: true
         implicitHeight: Style.space(32)
         // Square buttons, no radius, matching the tab strip.
-        color: hover.hovered ? root.ui.accentWash : "transparent"
+        color: link.promoted
+          ? (hover.hovered ? root.ui.accent : root.ui.accentWash)
+          : (hover.hovered ? root.ui.hoverWash : "transparent")
 
         HoverHandler {
           id: hover
@@ -68,7 +79,8 @@ ColumnLayout {
 
           Text {
             text: link.modelData.icon
-            color: hover.hovered ? root.ui.accent : root.ui.fg
+            color: link.promoted && hover.hovered ? root.ui.surface
+              : (link.promoted || hover.hovered ? root.ui.accent : root.ui.fg)
             font.family: root.ui.fontFamily
             font.pixelSize: Style.font.bodySmall
             Layout.alignment: Qt.AlignVCenter
@@ -76,13 +88,27 @@ ColumnLayout {
 
           Text {
             text: link.modelData.label
-            color: hover.hovered ? root.ui.accent : root.ui.fg
+            color: link.promoted && hover.hovered ? root.ui.surface
+              : (link.promoted || hover.hovered ? root.ui.accent : root.ui.fg)
             font.family: root.ui.fontFamily
             font.pixelSize: Style.font.bodySmall
             font.capitalization: Font.AllUppercase
             font.letterSpacing: 0.6
             Layout.alignment: Qt.AlignVCenter
           }
+
+          Text {
+            text: "\u2197"
+            color: root.ui.decor
+            font.family: root.ui.fontFamily
+            font.pixelSize: Style.font.caption
+            Layout.alignment: Qt.AlignVCenter
+          }
+        }
+
+        PanelToolTip {
+          visible: hover.hovered
+          text: link.modelData.tooltip
         }
       }
     }

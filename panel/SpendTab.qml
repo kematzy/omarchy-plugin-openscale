@@ -118,19 +118,6 @@ ColumnLayout {
     }
   }
 
-  Text {
-    Layout.fillWidth: true
-    text: root.usage && root.usage.error !== ""
-      ? root.usage.error
-      : (root.usage && root.usage.fetchedAt > 0
-        ? "Last updated: " + Format.stamp(root.usage.fetchedAt / 1000) : "")
-    color: root.usage && root.usage.error !== "" ? root.ui.urgent : root.ui.caption
-    font.family: root.ui.fontFamily
-    font.pixelSize: Style.font.caption
-    horizontalAlignment: Text.AlignRight
-    elide: Text.ElideRight
-  }
-
   // One window: name at the same size as a model name in the Models tab, the
   // figure bold and pinned to the right edge.
   component MoneyRow: RowLayout {

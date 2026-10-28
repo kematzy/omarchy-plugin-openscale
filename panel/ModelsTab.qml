@@ -351,32 +351,6 @@ ColumnLayout {
     }
   }
 
-  RowLayout {
-    Layout.fillWidth: true
-    spacing: Style.space(8)
-
-    Text {
-      Layout.fillWidth: true
-      text: root.error !== "" ? root.error : "Prices $/1M tokens"
-      // This line is the only explanation of the figures, so it should be
-      // readable rather than decorative.
-      color: root.error !== "" ? root.ui.urgent : root.ui.caption
-      font.family: root.ui.fontFamily
-      font.pixelSize: Style.font.caption
-      elide: Text.ElideRight
-    }
-
-    // When the catalogue was last read from OpenScale, so a week-old cache is
-    // visibly stale rather than quietly wrong.
-    Text {
-      visible: root.error === "" && root.fetchedAt > 0
-      text: "Last updated: " + Format.stamp(root.fetchedAt)
-      color: root.ui.caption
-      font.family: root.ui.fontFamily
-      font.pixelSize: Style.font.caption
-    }
-  }
-
   // Cache read at startup: silent, no spinner.
   Process {
     id: cacheProc

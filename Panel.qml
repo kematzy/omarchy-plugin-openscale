@@ -244,10 +244,26 @@ Panel {
           }
         }
 
+        // ---- Status strip (every tab) --------------------------------------
+        PanelStatus {
+          Layout.fillWidth: true
+          ui: theme
+          legend: root.tabIndex === root.modelsTabIndex
+            ? "\u26A1 fast serving · NEW since last launch · prices in USD $/1M tokens"
+            : "Amounts in USD"
+          error: root.tabIndex === root.modelsTabIndex
+            ? modelsTab.error
+            : (root.usage ? root.usage.error : "")
+          fetchedAt: root.tabIndex === root.modelsTabIndex
+            ? modelsTab.fetchedAt
+            : (root.usage && root.usage.fetchedAt > 0 ? root.usage.fetchedAt / 1000 : 0)
+        }
+
         // ---- Footer (every tab) --------------------------------------------
         PanelFooter {
           Layout.fillWidth: true
           ui: theme
+          lowCredit: root.lowCredit
         }
       }
     }

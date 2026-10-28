@@ -74,19 +74,6 @@ ColumnLayout {
     }
   }
 
-  Text {
-    Layout.fillWidth: true
-    text: root.usage && root.usage.error !== ""
-      ? root.usage.error
-      : (root.usage && root.usage.fetchedAt > 0
-        ? "Last updated: " + Format.stamp(root.usage.fetchedAt / 1000) : "")
-    color: root.usage && root.usage.error !== "" ? root.ui.urgent : root.ui.caption
-    font.family: root.ui.fontFamily
-    font.pixelSize: Style.font.caption
-    horizontalAlignment: Text.AlignRight
-    elide: Text.ElideRight
-  }
-
   // One window: title, the five figures, then a bar per model.
   component Section: ColumnLayout {
     id: section

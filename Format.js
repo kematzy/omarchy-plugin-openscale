@@ -66,6 +66,21 @@ function pad(value) {
   return (value < 10 ? "0" : "") + value
 }
 
+// "Updated 2 min ago" / "Updated 3 h ago" / "Updated 27 Oct 17:20".
+// Seconds-level precision is noise for a value that refreshes on a poll;
+// the exact stamp stays available on hover.
+function relativeStamp(seconds) {
+  if (!seconds) return ""
+  var delta = Math.floor(Date.now() / 1000 - seconds)
+  if (delta < 60) return "Updated just now"
+  if (delta < 3600) return "Updated " + Math.floor(delta / 60) + " min ago"
+  if (delta < 86400) return "Updated " + Math.floor(delta / 3600) + " h ago"
+  var d = new Date(seconds * 1000)
+  var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+  return "Updated " + d.getDate() + " " + months[d.getMonth()] + " "
+    + pad(d.getHours()) + ":" + pad(d.getMinutes())
+}
+
 // Turns whatever a CLI printed on failure into one readable line.
 //
 // `osc` reports errors as JSON — {"error": {"code", "exit", "message"}} — so
