@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import qs.Commons
-import qs.Commons as Commons
 
 // Panel header, shown above the tabs on every tab: the brand lockup on the
 // left, the credit balance on the right with its caption beneath it.
@@ -34,30 +33,16 @@ RowLayout {
   property real logoHeight: Style.space(30)
   // Nudges the figure block down so the figure lines up with the lockup.
   property real balanceOffset: Style.space(4)
-  property string fontFamily: Style.font.family
-  property color foreground: Commons.Color.foreground
-  property color urgentColor: Commons.Color.urgent
+
+  property var ui: null
 
   // Intrinsic size of assets/openscale-logo.svg (213 x 47).
   readonly property real logoAspect: 213 / 47
   readonly property real logoWidth: Math.round(root.logoHeight * root.logoAspect)
 
-  // The popup surface this header sits on. Secondary colours are mixed toward
-  // it rather than given alpha: MultiEffect colorization paints an opaque
-  // colour, and a blend lands on the same visual weight for light and dark
-  // themes, where a fixed grey would not.
-  readonly property color surfaceColor: Commons.Color.popups.background
-  readonly property color logoColor: root.blend(root.foreground, root.surfaceColor, 0.22)
-  readonly property color captionColor: root.blend(root.foreground, root.surfaceColor, 0.25)
-  readonly property color amountColor: root.lowCredit ? root.urgentColor : root.foreground
+  readonly property color amountColor: root.lowCredit ? root.ui.urgent : root.ui.fg
 
-  function blend(a, b, amount) {
-    return Qt.rgba(a.r + (b.r - a.r) * amount,
-                   a.g + (b.g - a.g) * amount,
-                   a.b + (b.b - a.b) * amount, 1)
-  }
-
-  spacing: Style.space(9)
+  spacing: Style.space(8)
   implicitHeight: Math.max(root.logoHeight, balanceBox.implicitHeight)
 
   onBusyChanged: {
@@ -118,7 +103,7 @@ RowLayout {
       source: logo
       colorization: 1.0
       // Hover brings the lockup up to the figure's colour, so it reads as a link.
-      colorizationColor: logoHover.hovered ? root.foreground : root.logoColor
+      colorizationColor: logoHover.hovered ? root.ui.fg : root.ui.decor
     }
   }
 
@@ -144,7 +129,7 @@ RowLayout {
 
       RowLayout {
         Layout.alignment: Qt.AlignRight
-        spacing: Style.space(6)
+        spacing: Style.space(8)
 
         // Spinner sits in its own text field ahead of the figure, and only
         // while a fetch is in flight. A hidden layout item takes no space, so
@@ -155,8 +140,8 @@ RowLayout {
           visible: root.spinning
           text: "\uF021"
           textFormat: Text.PlainText
-          color: root.captionColor
-          font.family: root.fontFamily
+          color: root.ui.label
+          font.family: root.ui.fontFamily
           font.pixelSize: Style.font.title
 
           RotationAnimation on rotation {
@@ -179,7 +164,7 @@ RowLayout {
           horizontalAlignment: Text.AlignRight
           text: root.creditText
           color: root.amountColor
-          font.family: root.fontFamily
+          font.family: root.ui.fontFamily
           font.pixelSize: Style.font.display
           font.bold: true
 
@@ -193,9 +178,9 @@ RowLayout {
         Layout.alignment: Qt.AlignRight
         horizontalAlignment: Text.AlignRight
         text: root.creditCaption
-        color: root.captionColor
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.subtitle
+        color: root.ui.caption
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.caption
         font.capitalization: Font.AllUppercase
         font.letterSpacing: 0.8
       }

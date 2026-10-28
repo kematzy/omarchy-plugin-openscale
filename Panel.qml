@@ -89,10 +89,13 @@ Panel {
   }
 
   // ---- Theme ---------------------------------------------------------------
-  readonly property color contentForeground: bar ? bar.foreground : Commons.Color.foreground
-  readonly property string contentFontFamily: bar ? bar.fontFamily : Style.font.family
-  readonly property color mutedForeground: Commons.Color.muted
-  readonly property color accentColor: Commons.Color.accent
+  // Single source of colour for the whole panel; children receive it as `ui`.
+  readonly property var ui: theme
+
+  Theme {
+    id: theme
+    foregroundColor: root.bar ? root.bar.foreground : Commons.Color.foreground
+  }
 
   // ---- Tabs ----------------------------------------------------------------
   property int tabIndex: 0
@@ -139,8 +142,7 @@ Panel {
           creditText: root.creditText
           lowCredit: root.lowCredit
           busy: root.balanceRefreshing
-          fontFamily: root.contentFontFamily
-          foreground: root.contentForeground
+          ui: theme
         }
 
         // ---- Tab bar -------------------------------------------------------
@@ -149,12 +151,13 @@ Panel {
         // the tabs from the balance.
         ColumnLayout {
           Layout.fillWidth: true
-          Layout.topMargin: Style.space(10)
+          Layout.topMargin: Style.space(12)
           spacing: 0
 
           PanelSeparator {
             Layout.fillWidth: true
-            foreground: root.contentForeground
+            foreground: theme.fg
+            strength: theme.ruleStrong
           }
 
           TabBar {
@@ -172,24 +175,18 @@ Panel {
               // Both usage tabs are fed by one loader, so both spin while it
               // is fetching.
               busy: root.usage ? root.usage.loading : false
-              fontFamily: root.contentFontFamily
-              foreground: root.contentForeground
-              accent: root.accentColor
+              ui: theme
             }
             Tab {
               text: "Tokens"
               busy: root.usage ? root.usage.loading : false
-              fontFamily: root.contentFontFamily
-              foreground: root.contentForeground
-              accent: root.accentColor
+              ui: theme
             }
             Tab {
               text: "Models"
               // Spins only while the catalogue is actually being fetched.
               busy: modelsTab.loading
-              fontFamily: root.contentFontFamily
-              foreground: root.contentForeground
-              accent: root.accentColor
+              ui: theme
             }
           }
         }
@@ -202,10 +199,7 @@ Panel {
 
           SpendTab {
             id: spendTab
-            fontFamily: root.contentFontFamily
-            foreground: root.contentForeground
-            mutedForeground: root.mutedForeground
-            accent: root.accentColor
+            ui: theme
             spent24hUsd: root.spent24hUsd
             usage: root.usage
             lowBalance: root.lowBalance
@@ -216,25 +210,19 @@ Panel {
           }
           TokensTab {
             id: tokensTab
-            fontFamily: root.contentFontFamily
-            foreground: root.contentForeground
-            accent: root.accentColor
+            ui: theme
             usage: root.usage
           }
           ModelsTab {
             id: modelsTab
-            fontFamily: root.contentFontFamily
-            foreground: root.contentForeground
-            mutedForeground: root.mutedForeground
+            ui: theme
           }
         }
 
         // ---- Footer (every tab) --------------------------------------------
         PanelFooter {
           Layout.fillWidth: true
-          fontFamily: root.contentFontFamily
-          foreground: root.contentForeground
-          accent: root.accentColor
+          ui: theme
         }
       }
     }

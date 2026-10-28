@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Commons as Commons
 import qs.Ui
 
 // Panel footer, shown below the tabs on every tab: a full-width rule closing
@@ -23,22 +22,21 @@ ColumnLayout {
     { icon: "\uF02D", label: "Docs", url: "https://openscale.so/docs" }
   ]
 
-  property string fontFamily: Style.font.family
-  property color foreground: Commons.Color.foreground
-  property color accent: Commons.Color.accent
+  property var ui: null
 
   spacing: Style.space(8)
 
   PanelSeparator {
     Layout.fillWidth: true
-    foreground: root.foreground
+    foreground: root.ui.fg
+    strength: root.ui.ruleStrong
   }
 
   RowLayout {
     id: buttons
 
     Layout.fillWidth: true
-    spacing: Style.space(6)
+    spacing: Style.space(8)
     implicitHeight: Style.space(34)
 
     Repeater {
@@ -51,7 +49,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: Style.space(32)
         // Square buttons, no radius, matching the tab strip.
-        color: hover.hovered ? Util.alpha(root.accent, 0.12) : "transparent"
+        color: hover.hovered ? root.ui.accentWash : "transparent"
 
         HoverHandler {
           id: hover
@@ -66,20 +64,20 @@ ColumnLayout {
 
         RowLayout {
           anchors.centerIn: parent
-          spacing: Style.space(7)
+          spacing: Style.space(8)
 
           Text {
             text: link.modelData.icon
-            color: hover.hovered ? root.accent : root.foreground
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.body
+            color: hover.hovered ? root.ui.accent : root.ui.fg
+            font.family: root.ui.fontFamily
+            font.pixelSize: Style.font.bodySmall
             Layout.alignment: Qt.AlignVCenter
           }
 
           Text {
             text: link.modelData.label
-            color: hover.hovered ? root.accent : root.foreground
-            font.family: root.fontFamily
+            color: hover.hovered ? root.ui.accent : root.ui.fg
+            font.family: root.ui.fontFamily
             font.pixelSize: Style.font.bodySmall
             font.capitalization: Font.AllUppercase
             font.letterSpacing: 0.6

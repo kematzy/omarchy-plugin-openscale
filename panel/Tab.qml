@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Commons
-import qs.Commons as Commons
 
 // One tab in the panel's TabBar.
 //
@@ -12,20 +11,18 @@ import qs.Commons as Commons
 TabButton {
   id: root
 
-  property string fontFamily: Style.font.family
-  property color foreground: Commons.Color.foreground
-  property color accent: Commons.Color.accent
+  property var ui: null
   // Spins a refresh glyph at the tab's leading edge while that tab's data is
   // loading. Panel.qml binds it to the usage loader for Spend and Tokens, and
   // to the catalogue's own loading flag for Models.
   property bool busy: false
 
   // Square tabs, not pills: no radius on any state, by preference.
-  readonly property color hoverColor: Util.alpha(root.foreground, 0.06)
+  readonly property color hoverColor: root.ui.hoverWash
   // Selected is the same foreground wash as hover, only deeper, so the active
   // tab reads as "the one you are on" rather than as a differently coloured
   // control. The accent stays on the label.
-  readonly property color activeColor: Util.alpha(root.foreground, 0.14)
+  readonly property color activeColor: root.ui.accentWash
 
   // Fixed height so the strip is one band; the width has a floor of 84 so a
   // short label still gives a comfortable target, and grows with a longer one.
@@ -51,14 +48,14 @@ TabButton {
       anchors.left: parent.left
       // A few pixels in from the tab's leading edge, so the glyph is not
       // flush against the tab it belongs to.
-      anchors.leftMargin: Style.space(3)
+      anchors.leftMargin: Style.space(2)
       anchors.verticalCenter: parent.verticalCenter
       visible: root.busy
       text: "\uF021"
       textFormat: Text.PlainText
-      color: Util.alpha(root.foreground, 0.7)
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.body
+      color: root.ui.label
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.bodySmall
 
       RotationAnimation on rotation {
         running: root.busy
@@ -74,11 +71,11 @@ TabButton {
       id: label
       anchors.centerIn: parent
       text: root.text
-      color: root.checked ? root.accent : root.foreground
-      font.family: root.fontFamily
+      color: root.checked ? root.ui.accent : root.ui.fg
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
       font.capitalization: Font.AllUppercase
-      font.letterSpacing: 0.8
+      font.letterSpacing: 0.6
       font.bold: root.checked
       horizontalAlignment: Text.AlignHCenter
       verticalAlignment: Text.AlignVCenter

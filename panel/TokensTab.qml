@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
-import qs.Commons as Commons
 import "../Format.js" as Format
 
 // "Tokens" tab: requests and tokens for the same three windows, each followed
@@ -19,10 +18,7 @@ import "../Format.js" as Format
 ColumnLayout {
   id: root
 
-  property string fontFamily: Style.font.family
-  property color foreground: Commons.Color.foreground
-  property color mutedForeground: Commons.Color.muted
-  property color accent: Commons.Color.accent
+  property var ui: null
   property var usage: null
 
   readonly property var metricLabels: ["Requests", "Input", "Cached", "Output", "Total"]
@@ -30,13 +26,13 @@ ColumnLayout {
     Style.space(68), Style.space(58), Style.space(62), Style.space(58), Style.space(58)
   ]
 
-  spacing: Style.space(10)
+  spacing: Style.space(12)
 
   Text {
     Layout.fillWidth: true
     text: "Tokens & Models Used"
-    color: root.foreground
-    font.family: root.fontFamily
+    color: root.ui.fg
+    font.family: root.ui.fontFamily
     font.pixelSize: Style.font.title
     font.bold: true
   }
@@ -61,7 +57,7 @@ ColumnLayout {
       id: sections
 
       width: view.width
-      spacing: Style.space(14)
+      spacing: Style.space(16)
 
       Section {
         title: "Today"
@@ -84,8 +80,8 @@ ColumnLayout {
       ? root.usage.error
       : (root.usage && root.usage.fetchedAt > 0
         ? "Last updated: " + Format.stamp(root.usage.fetchedAt / 1000) : "")
-    color: root.usage && root.usage.error !== "" ? Commons.Color.urgent : Util.alpha(root.foreground, 0.75)
-    font.family: root.fontFamily
+    color: root.usage && root.usage.error !== "" ? root.ui.urgent : root.ui.caption
+    font.family: root.ui.fontFamily
     font.pixelSize: Style.font.caption
     horizontalAlignment: Text.AlignRight
     elide: Text.ElideRight
@@ -131,9 +127,9 @@ ColumnLayout {
     Text {
       Layout.fillWidth: true
       text: section.title
-      color: root.foreground
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.subtitle
+      color: root.ui.fg
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.title
       font.bold: true
     }
 
@@ -150,11 +146,11 @@ ColumnLayout {
           Layout.fillWidth: true
           Layout.preferredWidth: root.columnWidths[index]
           text: root.metricLabels[index]
-          color: root.mutedForeground
-          font.family: root.fontFamily
+          color: root.ui.label
+          font.family: root.ui.fontFamily
           font.pixelSize: Style.font.caption
           font.capitalization: Font.AllUppercase
-          font.letterSpacing: 0.6
+          font.letterSpacing: 0.8
           horizontalAlignment: Text.AlignRight
         }
       }
@@ -173,9 +169,9 @@ ColumnLayout {
           Layout.fillWidth: true
           Layout.preferredWidth: root.columnWidths[index]
           text: section.figures[index]
-          color: root.foreground
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.body
+          color: root.ui.fg
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.bodySmall
           horizontalAlignment: Text.AlignRight
         }
       }
@@ -185,8 +181,8 @@ ColumnLayout {
       Layout.fillWidth: true
       Layout.topMargin: Style.space(2)
       text: "Models used: " + (section.window && section.window.models ? section.window.models.length : 0)
-      color: root.mutedForeground
-      font.family: root.fontFamily
+      color: root.ui.label
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.caption
     }
 
@@ -210,11 +206,11 @@ ColumnLayout {
     property real ratio: 0
 
     Layout.fillWidth: true
-    implicitHeight: Math.max(nameText.implicitHeight, percentText.implicitHeight) + Style.space(6)
+    implicitHeight: Math.max(nameText.implicitHeight, percentText.implicitHeight) + Style.space(8)
 
     Rectangle {
       anchors.fill: parent
-      color: Util.alpha(root.foreground, 0.07)
+      color: root.ui.zebraWash
     }
 
     Rectangle {
@@ -222,18 +218,18 @@ ColumnLayout {
       anchors.top: parent.top
       anchors.bottom: parent.bottom
       width: parent.width * Math.max(0, Math.min(1, share.ratio))
-      color: Util.alpha(root.accent, 0.28)
+      color: root.ui.accentWash
     }
 
     Text {
       id: nameText
       anchors.left: parent.left
-      anchors.leftMargin: Style.space(6)
+      anchors.leftMargin: Style.space(8)
       anchors.verticalCenter: parent.verticalCenter
-      width: Math.max(0, parent.width - percentText.implicitWidth - Style.space(20))
+      width: Math.max(0, parent.width - percentText.implicitWidth - Style.space(24))
       text: share.label
-      color: root.foreground
-      font.family: root.fontFamily
+      color: root.ui.fg
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
       elide: Text.ElideMiddle
     }
@@ -241,11 +237,11 @@ ColumnLayout {
     Text {
       id: percentText
       anchors.right: parent.right
-      anchors.rightMargin: Style.space(6)
+      anchors.rightMargin: Style.space(8)
       anchors.verticalCenter: parent.verticalCenter
       text: Format.percent(share.ratio)
-      color: root.foreground
-      font.family: root.fontFamily
+      color: root.ui.fg
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
     }
   }

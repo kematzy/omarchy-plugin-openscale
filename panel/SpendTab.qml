@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Commons as Commons
 import qs.Ui
 import "../Format.js" as Format
 
@@ -19,10 +18,7 @@ import "../Format.js" as Format
 ColumnLayout {
   id: root
 
-  property string fontFamily: Style.font.family
-  property color foreground: Commons.Color.foreground
-  property color mutedForeground: Commons.Color.muted
-  property color accent: Commons.Color.accent
+  property var ui: null
 
   // Rolling 24 hours from the balance payload; -1 while unknown.
   property real spent24hUsd: -1
@@ -39,20 +35,20 @@ ColumnLayout {
 
   Keys.onEscapePressed: if (editing) balanceField.field.focus = false
 
-  spacing: Style.space(10)
+  spacing: Style.space(12)
 
   Text {
     Layout.fillWidth: true
     text: "Spending Overview (USD)"
-    color: root.foreground
-    font.family: root.fontFamily
+    color: root.ui.fg
+    font.family: root.ui.fontFamily
     font.pixelSize: Style.font.title
     font.bold: true
   }
 
   ColumnLayout {
     Layout.fillWidth: true
-    spacing: Style.space(6)
+    spacing: Style.space(8)
 
     MoneyRow {
       label: "Last 24 hours"
@@ -79,7 +75,8 @@ ColumnLayout {
   // ---- Low balance ---------------------------------------------------------
   PanelSeparator {
     Layout.fillWidth: true
-    foreground: root.foreground
+    foreground: root.ui.fg
+    strength: root.ui.ruleStrong
   }
 
   RowLayout {
@@ -92,16 +89,16 @@ ColumnLayout {
 
       Text {
         text: "Low-balance alert"
-        color: root.foreground
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.body
+        color: root.ui.fg
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.bodySmall
       }
 
       Text {
         Layout.fillWidth: true
         text: "Highlight the balance in the bar and panel header when it falls to or below this amount."
-        color: Util.alpha(root.foreground, 0.75)
-        font.family: root.fontFamily
+        color: root.ui.caption
+        font.family: root.ui.fontFamily
         font.pixelSize: Style.font.caption
         wrapMode: Text.WordWrap
       }
@@ -114,9 +111,9 @@ ColumnLayout {
       from: 0
       to: 1000
       stepSize: 1
-      foreground: root.foreground
-      accent: root.accent
-      fontFamily: root.fontFamily
+      foreground: root.ui.fg
+      accent: root.ui.accent
+      fontFamily: root.ui.fontFamily
       onModified: function(value) { root.lowBalanceEdited(value) }
     }
   }
@@ -127,8 +124,8 @@ ColumnLayout {
       ? root.usage.error
       : (root.usage && root.usage.fetchedAt > 0
         ? "Last updated: " + Format.stamp(root.usage.fetchedAt / 1000) : "")
-    color: root.usage && root.usage.error !== "" ? Commons.Color.urgent : Util.alpha(root.foreground, 0.75)
-    font.family: root.fontFamily
+    color: root.usage && root.usage.error !== "" ? root.ui.urgent : root.ui.caption
+    font.family: root.ui.fontFamily
     font.pixelSize: Style.font.caption
     horizontalAlignment: Text.AlignRight
     elide: Text.ElideRight
@@ -147,15 +144,15 @@ ColumnLayout {
     Text {
       Layout.fillWidth: true
       text: row.label
-      color: root.foreground
-      font.family: root.fontFamily
+      color: root.ui.fg
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.title
     }
 
     Text {
       text: row.amount
-      color: root.foreground
-      font.family: root.fontFamily
+      color: root.ui.fg
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.title
       font.bold: true
       horizontalAlignment: Text.AlignRight

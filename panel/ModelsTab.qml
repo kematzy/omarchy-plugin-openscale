@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Io
 import qs.Commons
-import qs.Commons as Commons
 import "../Format.js" as Format
 
 // "Models" tab: two-line blocks, one per model, cheapest first.
@@ -22,10 +21,7 @@ import "../Format.js" as Format
 ColumnLayout {
   id: root
 
-  property string fontFamily: Style.font.family
-  property color foreground: Commons.Color.foreground
-  property color mutedForeground: Commons.Color.muted
-  property color accent: Commons.Color.accent
+  property var ui: null
 
   // Cheapest first. "input" | "output" | "context" — the hook for clickable
   // sorting when the tab gains it; nothing sets it yet.
@@ -68,7 +64,7 @@ ColumnLayout {
     ? "cheapest output first"
     : (root.sortKey === "context" ? "smallest context first" : "cheapest input first")
 
-  spacing: Style.space(6)
+  spacing: Style.space(8)
 
   // The cache is read once, when the panel builds its tabs, so the Models tab
   // has content the first time it is opened after a shell restart.
@@ -193,7 +189,7 @@ ColumnLayout {
     property string label: ""
     property string value: ""
 
-    readonly property real labelGap: Style.space(5)
+    readonly property real labelGap: Style.space(4)
 
     implicitWidth: labelText.implicitWidth + labelGap + valueText.implicitWidth
     implicitHeight: Math.max(labelText.implicitHeight, valueText.implicitHeight)
@@ -201,8 +197,8 @@ ColumnLayout {
     Text {
       id: labelText
       text: figure.label
-      color: root.mutedForeground
-      font.family: root.fontFamily
+      color: root.ui.label
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
       // Sit on the same baseline as the figure beside it, whatever the two
       // sizes are.
@@ -212,9 +208,9 @@ ColumnLayout {
     Text {
       id: valueText
       text: figure.value
-      color: root.foreground
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.subtitle
+      color: root.ui.fg
+      font.family: root.ui.fontFamily
+      font.pixelSize: Style.font.title
       horizontalAlignment: Text.AlignRight
       x: labelText.implicitWidth + figure.labelGap
       width: Math.max(0, figure.width - x)
@@ -258,11 +254,11 @@ ColumnLayout {
           Layout.fillWidth: true
           // Room between the name and the figures under it, so the two lines
           // read as one block rather than as two unrelated rows.
-          spacing: Style.space(6)
+          spacing: Style.space(8)
 
           RowLayout {
             Layout.fillWidth: true
-            spacing: Style.space(6)
+            spacing: Style.space(8)
 
             Text {
               Layout.fillWidth: false
@@ -272,10 +268,10 @@ ColumnLayout {
               // glyph out — and the trailing spacer takes the surplus, which
               // is what keeps the glyph next to the text.
               Layout.maximumWidth: block.width
-                - (badge.visible ? badge.implicitWidth + Style.space(6) : 0)
+                - (badge.visible ? badge.implicitWidth + Style.space(8) : 0)
               text: root.shortName(block.modelData)
-              color: root.foreground
-              font.family: root.fontFamily
+              color: root.ui.fg
+              font.family: root.ui.fontFamily
               font.pixelSize: Style.font.title
               font.bold: true
               elide: Text.ElideRight
@@ -285,11 +281,11 @@ ColumnLayout {
             Text {
               visible: root.isNew(block.modelData)
               text: "NEW"
-              color: root.accent
-              font.family: root.fontFamily
+              color: root.ui.accent
+              font.family: root.ui.fontFamily
               font.pixelSize: Style.font.caption
               font.bold: true
-              font.letterSpacing: 0.6
+              font.letterSpacing: 0.8
               Layout.alignment: Qt.AlignVCenter
             }
 
@@ -297,9 +293,9 @@ ColumnLayout {
               id: badge
               visible: block.modelData.fastMode === true
               text: "\uF0E7"
-              color: root.accent
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.body
+              color: root.ui.accent
+              font.family: root.ui.fontFamily
+              font.pixelSize: Style.font.bodySmall
               Layout.alignment: Qt.AlignVCenter
             }
 
@@ -362,10 +358,10 @@ ColumnLayout {
     Text {
       Layout.fillWidth: true
       text: root.error !== "" ? root.error : "Prices $/1M tokens"
-      // Brighter than Color.muted: this line is the only explanation of the
-      // figures, so it should be readable rather than decorative.
-      color: root.error !== "" ? Commons.Color.urgent : Util.alpha(root.foreground, 0.75)
-      font.family: root.fontFamily
+      // This line is the only explanation of the figures, so it should be
+      // readable rather than decorative.
+      color: root.error !== "" ? root.ui.urgent : root.ui.caption
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.caption
       elide: Text.ElideRight
     }
@@ -375,8 +371,8 @@ ColumnLayout {
     Text {
       visible: root.error === "" && root.fetchedAt > 0
       text: "Last updated: " + Format.stamp(root.fetchedAt)
-      color: Util.alpha(root.foreground, 0.75)
-      font.family: root.fontFamily
+      color: root.ui.caption
+      font.family: root.ui.fontFamily
       font.pixelSize: Style.font.caption
     }
   }
