@@ -8,7 +8,7 @@ import "../Format.js" as Format
 // the one setting worth a control — the low-balance threshold.
 //
 // "Last 24 hours" is rolling spend from the balance payload (Service.qml), while
-// "Today only", "Last 7 days" and "Last 30 days" are the period figures from the
+// "Today", "Last 7 days" and "Last 30 days" are the period figures from the
 // usage loader. The rolling and calendar numbers therefore differ slightly, which
 // is why the labels distinguish them.
 //
@@ -28,18 +28,16 @@ ColumnLayout {
 
   signal lowBalanceEdited(real value)
 
-  // True while the threshold field has the keyboard. Panel.qml blocks its key
-  // catcher on this so arrows and digits reach the editor instead of changing
-  // tabs; the Escape handler below hands focus back so the panel can close.
-  readonly property bool editing: balanceField.field.activeFocus
-
-  Keys.onEscapePressed: if (editing) balanceField.field.focus = false
+  // The stepper is click-driven and never takes keyboard focus, so this tab
+  // never needs to block the panel's key catcher. Kept as a binding point for
+  // Panel.qml's `blocked: spendTab.editing`.
+  readonly property bool editing: false
 
   spacing: Style.space(12)
 
   Text {
     Layout.fillWidth: true
-    text: "Spending Overview (USD)"
+    text: "Spending Overview"
     color: root.ui.fg
     font.family: root.ui.fontFamily
     font.pixelSize: Style.font.title
@@ -48,23 +46,39 @@ ColumnLayout {
 
   ColumnLayout {
     Layout.fillWidth: true
-    spacing: Style.space(8)
+    spacing: Style.space(4)
+
+    PanelSectionHeader {
+      text: "ROLLING"
+      foreground: root.ui.label
+    }
 
     MoneyRow {
       label: "Last 24 hours"
       amount: root.spent24hUsd >= 0 ? Format.money(root.spent24hUsd) : "—"
     }
+
+    PanelSectionHeader {
+      Layout.topMargin: Style.space(12)
+      text: "CALENDAR"
+      foreground: root.ui.label
+    }
+
     MoneyRow {
-      label: "Today only"
+      striped: true
+      label: "Today"
       amount: root.usage && root.usage.today ? Format.money(root.usage.today.costUsd) : "—"
     }
     MoneyRow {
       label: "Last 7 days"
       amount: root.usage && root.usage.week ? Format.money(root.usage.week.costUsd) : "—"
+      rate: root.usage && root.usage.week ? Format.money(root.usage.week.costUsd / 7) + "/day" : ""
     }
     MoneyRow {
+      striped: true
       label: "Last 30 days"
       amount: root.usage && root.usage.month ? Format.money(root.usage.month.costUsd) : "—"
+      rate: root.usage && root.usage.month ? Format.money(root.usage.month.costUsd / 30) + "/day" : ""
     }
   }
 
@@ -96,7 +110,7 @@ ColumnLayout {
 
       Text {
         Layout.fillWidth: true
-        text: "Highlight the balance in the bar and panel header when it falls to or below this amount."
+        text: "Highlight the balance in the bar and panel when credit falls to or below this amount."
         color: root.ui.caption
         font.family: root.ui.fontFamily
         font.pixelSize: Style.font.caption
@@ -104,46 +118,64 @@ ColumnLayout {
       }
     }
 
-    NumberField {
+    StepperField {
       id: balanceField
       Layout.alignment: Qt.AlignVCenter
+      ui: root.ui
       value: Math.round(root.lowBalance)
+      display: Format.money(root.lowBalance)
       from: 0
       to: 1000
       stepSize: 1
-      foreground: root.ui.fg
-      accent: root.ui.accent
-      fontFamily: root.ui.fontFamily
-      onModified: function(value) { root.lowBalanceEdited(value) }
+      onModified: function(amount) { root.lowBalanceEdited(amount) }
     }
   }
 
-  // One window: name at the same size as a model name in the Models tab, the
-  // figure bold and pinned to the right edge.
-  component MoneyRow: RowLayout {
+  // One window: name, the per-day rate that makes windows comparable, then the
+  // total. The faint alternating background ties a label to a figure ~300px
+  // away without drawing a rule for every row.
+  component MoneyRow: Rectangle {
     id: row
     property string label: ""
     property string amount: ""
+    property string rate: ""
+    property bool striped: false
 
     Layout.fillWidth: true
-    spacing: Style.space(8)
+    implicitHeight: Style.space(24)
+    color: row.striped ? root.ui.zebraWash : "transparent"
 
-    Text {
-      Layout.fillWidth: true
-      text: row.label
-      color: root.ui.fg
-      font.family: root.ui.fontFamily
-      font.pixelSize: Style.font.title
-    }
+    RowLayout {
+      anchors.fill: parent
+      anchors.leftMargin: Style.space(4)
+      anchors.rightMargin: Style.space(4)
+      spacing: Style.space(8)
 
-    Text {
-      text: row.amount
-      color: root.ui.fg
-      font.family: root.ui.fontFamily
-      font.pixelSize: Style.font.title
-      font.bold: true
-      horizontalAlignment: Text.AlignRight
-      Layout.alignment: Qt.AlignRight
+      Text {
+        Layout.fillWidth: true
+        text: row.label
+        color: root.ui.fg
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.title
+      }
+
+      Text {
+        text: row.rate
+        color: root.ui.label
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.caption
+        horizontalAlignment: Text.AlignRight
+      }
+
+      Text {
+        Layout.minimumWidth: Style.space(72)
+        text: row.amount
+        color: root.ui.fg
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.title
+        font.bold: true
+        horizontalAlignment: Text.AlignRight
+      }
     }
   }
 }
