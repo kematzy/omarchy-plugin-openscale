@@ -79,71 +79,84 @@ RowLayout {
   }
 
   // The lockup and its URL line, wrapped so both read as one link: one hover
-  // handler and one click target cover the whole column.
-  ColumnLayout {
+  // handler and one click target cover the whole column. The host is a plain
+  // Item — a ColumnLayout would manage an anchored overlay child, which is
+  // undefined behaviour — and the ColumnLayout inside stacks the two lines.
+  Item {
     id: logoColumn
     Layout.alignment: Qt.AlignTop
-    spacing: Style.space(4)
+    implicitWidth: logoContent.implicitWidth
+    implicitHeight: logoContent.implicitHeight
+
+    ColumnLayout {
+      id: logoContent
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      spacing: Style.space(4)
+
+      Item {
+        id: logoBox
+        Layout.preferredWidth: root.logoWidth
+        Layout.preferredHeight: root.logoHeight
+
+        Image {
+          id: logo
+          anchors.fill: parent
+          source: root.logoSrc
+          // 2x the painted size so the lockup stays crisp on HiDPI outputs; SVGs
+          // rasterise at sourceSize.
+          sourceSize.width: Math.round(root.logoWidth * 2)
+          sourceSize.height: Math.round(root.logoHeight * 2)
+          fillMode: Image.PreserveAspectFit
+          // Kept as a hidden layer so the effect below can sample it as a texture.
+          visible: false
+          layer.enabled: true
+        }
+
+        MultiEffect {
+          anchors.fill: parent
+          source: logo
+          colorization: 1.0
+          // Hover brings the lockup up to the figure's colour, so it reads as a link.
+          colorizationColor: logoHover.hovered ? root.ui.fg : root.ui.decor
+        }
+      }
+
+      RowLayout {
+        spacing: Style.space(4)
+
+        Text {
+          text: "https://openscale.so"
+          color: logoHover.hovered ? root.ui.accent : root.ui.caption
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.caption
+        }
+
+        // Appears on hover: says the click leaves the desktop for a browser.
+        Text {
+          visible: logoHover.hovered
+          text: "\u2197"
+          color: root.ui.accent
+          font.family: root.ui.fontFamily
+          font.pixelSize: Style.font.caption
+        }
+      }
+    }
 
     HoverHandler {
       id: logoHover
     }
 
     // Left click only, so a stray right or middle click does not open a browser.
-    // execArgv keeps the URL a literal argv entry: no shell re-parsing.
+    // execArgv keeps the URL a literal argv entry: no shell re-parsing. A
+    // sibling of the column rather than a child of it: the whole block is one
+    // click target, and a plain-Item parent makes the anchor legal.
     MouseArea {
       anchors.fill: parent
       acceptedButtons: Qt.LeftButton
       cursorShape: Qt.PointingHandCursor
       onClicked: Util.execArgv(["xdg-open", "https://openscale.so"])
-    }
-
-    Item {
-      id: logoBox
-      Layout.preferredWidth: root.logoWidth
-      Layout.preferredHeight: root.logoHeight
-
-      Image {
-        id: logo
-        anchors.fill: parent
-        source: root.logoSrc
-        // 2x the painted size so the lockup stays crisp on HiDPI outputs; SVGs
-        // rasterise at sourceSize.
-        sourceSize.width: Math.round(root.logoWidth * 2)
-        sourceSize.height: Math.round(root.logoHeight * 2)
-        fillMode: Image.PreserveAspectFit
-        // Kept as a hidden layer so the effect below can sample it as a texture.
-        visible: false
-        layer.enabled: true
-      }
-
-      MultiEffect {
-        anchors.fill: parent
-        source: logo
-        colorization: 1.0
-        // Hover brings the lockup up to the figure's colour, so it reads as a link.
-        colorizationColor: logoHover.hovered ? root.ui.fg : root.ui.decor
-      }
-    }
-
-    RowLayout {
-      spacing: Style.space(4)
-
-      Text {
-        text: "https://openscale.so"
-        color: logoHover.hovered ? root.ui.accent : root.ui.caption
-        font.family: root.ui.fontFamily
-        font.pixelSize: Style.font.caption
-      }
-
-      // Appears on hover: says the click leaves the desktop for a browser.
-      Text {
-        visible: logoHover.hovered
-        text: "\u2197"
-        color: root.ui.accent
-        font.family: root.ui.fontFamily
-        font.pixelSize: Style.font.caption
-      }
     }
 
     PanelToolTip {

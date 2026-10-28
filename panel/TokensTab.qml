@@ -250,6 +250,7 @@ ColumnLayout {
       model: section.modelShares
 
       delegate: ModelShare {
+        required property int index
         required property var modelData
 
         label: modelData.model
