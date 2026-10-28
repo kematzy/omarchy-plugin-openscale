@@ -54,6 +54,24 @@ function context(tokens) {
   return String(Math.round(n))
 }
 
+// Tabular figures: a fixed unit and a fixed number of decimals, chosen once
+// per column from its largest value. Mixing "986.66K" and "1.39M" down one
+// column defeats the right-alignment the column exists for.
+function unitFor(max) {
+  var n = Number(max)
+  if (!isFinite(n) || n < 10000) return ""
+  if (n < 999995) return "K"
+  return "M"
+}
+
+function inUnit(value, unit) {
+  var n = Number(value)
+  if (!isFinite(n) || n < 0) return "\u2014"
+  if (unit === "M") return (n / 1000000).toFixed(2) + "M"
+  if (unit === "K") return (n / 1000).toFixed(2) + "K"
+  return group(Math.round(n))
+}
+
 // "2026-10-26 at 15:57:53", local time, from epoch seconds.
 function stamp(seconds) {
   if (!seconds) return ""
