@@ -65,6 +65,13 @@ ColumnLayout {
   readonly property real columnOutput: Style.space(56)
   readonly property real columnCached: Style.space(56)
 
+  // The scrollbar is an overlay on the list's right edge, so without a
+  // reserved lane it paints over the CACHE column (and the header above it
+  // reads misaligned with the rows). Fixed rather than conditional: a gutter
+  // that appears with the scrollbar would shift every column when the list
+  // overflows or not.
+  readonly property real scrollGutter: Style.space(12)
+
   // A flat list of header and model entries, so one ListView can render both.
   // Vendors are alphabetical; models inside a vendor are cheapest-input first.
   readonly property var rows: {
@@ -258,10 +265,12 @@ ColumnLayout {
 
   // Pinned column header. The MODEL cell plays the name column: flexible,
   // taking the same surplus the rows' names take, so the four figure columns
-  // land on the same edges as the rows below.
+  // land on the same edges as the rows below. The right margin reserves the
+  // scrollbar's lane.
   RowLayout {
     Layout.fillWidth: true
     visible: !root.firstRun
+    Layout.rightMargin: root.scrollGutter
     spacing: Style.space(8)
 
     Text {
@@ -353,7 +362,9 @@ ColumnLayout {
 
       delegate: Loader {
         required property var modelData
-        width: view.width
+        // Inset by the scrollbar's reserved lane, so the CACHE column and the
+        // row separators stay clear of the overlay.
+        width: view.width - root.scrollGutter
         sourceComponent: modelData.isHeader ? vendorHeader : modelRow
         property var entry: modelData
       }

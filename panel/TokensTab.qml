@@ -24,9 +24,24 @@ ColumnLayout {
   property var usage: null
 
   readonly property var metricLabels: ["Requests", "Input", "Cached", "Output", "Total"]
+
+  // The window name is now the row's first column rather than a line of its
+  // own. Widths are sized to the longest header label (REQUESTS) and the
+  // longest figure (505.43M); the surplus is shared by Layout.fillWidth, so
+  // the last column still lands on the right edge.
+  readonly property real columnTitle: Style.space(64)
   readonly property var columnWidths: [
-    Style.space(68), Style.space(58), Style.space(62), Style.space(58), Style.space(58)
+    Style.space(64), Style.space(56), Style.space(60),
+    Style.space(56), Style.space(60)
   ]
+
+  // The scrollbar is an overlay, not a layout item, so it paints on top of
+  // whatever is beneath it. Reserving its lane on the scrolling content *and*
+  // on the pinned header keeps the TOTAL column clear and keeps header and
+  // values in one column. Fixed rather than conditional: a gutter that
+  // appears with the scrollbar would shift every column when a window gains
+  // a model.
+  readonly property real scrollGutter: Style.space(12)
 
   // One unit per column, picked from the largest value any window carries, so
   // the three sections are directly comparable down the column.
@@ -57,13 +72,20 @@ ColumnLayout {
     font.bold: true
   }
 
-  // Pinned column header. The leading spacer matches the sections' content
-  // indent, so the labels sit exactly over the figures.
+  // Pinned column header. Its leading spacer mirrors the title column so the
+  // surplus splits the same way in both rows, and the right margin reserves
+  // the scrollbar's lane.
   RowLayout {
     Layout.fillWidth: true
-    spacing: Style.space(8)
+    Layout.rightMargin: root.scrollGutter
+    spacing: Style.space(4)
 
-    Item { Layout.preferredWidth: Style.space(12) }
+    // Empty, but laid out exactly like the title column below it, so the
+    // surplus Layout.fillWidth hands out is split the same way in both rows.
+    Item {
+      Layout.fillWidth: true
+      Layout.preferredWidth: root.columnTitle
+    }
 
     Repeater {
       model: root.metricLabels.length
@@ -114,19 +136,19 @@ ColumnLayout {
       ColumnLayout {
         id: sections
 
-        width: view.width
+        width: view.width - root.scrollGutter
         spacing: Style.space(16)
 
         Section {
-          title: "Today"
+          title: "TODAY"
           window: root.usage ? root.usage.today : null
         }
         Section {
-          title: "Last 7 days"
+          title: "7 DAYS"
           window: root.usage ? root.usage.week : null
         }
         Section {
-          title: "Last 30 days"
+          title: "30 DAYS"
           window: root.usage ? root.usage.month : null
         }
       }
@@ -155,7 +177,7 @@ ColumnLayout {
     strength: root.ui.ruleStrong
   }
 
-  // One window: title, the five figures, then the model list.
+  // One window: title and five figures on one line, then the model list.
   component Section: ColumnLayout {
     id: section
     property string title: ""
@@ -199,26 +221,34 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Style.space(4)
 
-    Text {
-      Layout.fillWidth: true
-      text: section.title
-      color: root.ui.fg
-      font.family: root.ui.fontFamily
-      font.pixelSize: Style.font.title
-      font.bold: true
-    }
-
     RowLayout {
-      visible: !section.empty
       Layout.fillWidth: true
-      spacing: Style.space(8)
+      spacing: Style.space(4)
 
-      // Indents the figures to the same edge as the model list below them,
-      // where the pinned header's spacer finds them.
-      Item { Layout.preferredWidth: Style.space(12) }
+      PanelSectionHeader {
+        Layout.fillWidth: true
+        Layout.preferredWidth: root.columnTitle
+        text: section.title
+        foreground: root.ui.label
+        // Stepped up from the component's caption default: the title shares a
+        // row with figures and must not read as the smallest thing on it.
+        fontSize: Style.font.title
+      }
+
+      // A window with no requests has nothing to tabulate, so the message
+      // takes the five figure columns rather than leaving a row of dashes.
+      Text {
+        visible: section.empty
+        Layout.fillWidth: true
+        text: "No usage in this window."
+        color: root.ui.caption
+        font.family: root.ui.fontFamily
+        font.pixelSize: Style.font.bodySmall
+        horizontalAlignment: Text.AlignRight
+      }
 
       Repeater {
-        model: section.figures.length
+        model: section.empty ? 0 : section.figures.length
 
         Text {
           required property int index
@@ -233,15 +263,6 @@ ColumnLayout {
           horizontalAlignment: Text.AlignRight
         }
       }
-    }
-
-    Text {
-      visible: section.empty
-      Layout.fillWidth: true
-      text: "No usage in this window."
-      color: root.ui.caption
-      font.family: root.ui.fontFamily
-      font.pixelSize: Style.font.bodySmall
     }
 
     // Zero-total windows — which includes every zero-request window — have no
