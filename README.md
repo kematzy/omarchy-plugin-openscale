@@ -60,7 +60,10 @@ or 30 days. It also shows token usage, which models were used and available mode
   - **Today**
   - the **Last 7 days**
   - the **Last 30 days**
-- Shows used models in proportional bars with relative percentage values.
+- One line per window under a pinned column header, with one unit per column so
+  figures stay comparable down the list.
+- Shows used models in an indented list with each one's share of the window's
+  tokens.
 
 <br />
 
@@ -73,11 +76,12 @@ or 30 days. It also shows token usage, which models were used and available mode
 <br />
 <br />
 
-- Shows available models, sorted by input price, with details showing:
+- Shows available models grouped by vendor, cheapest-input first, with details showing:
   - Context window
   - Input, output, and cached-input prices per 1M tokens
   - A ⚡ mark for fast-serving variants
   - A **NEW** label beside recently added models
+- Type in the filter field to narrow the list live; `Esc` clears it.
 
 > [!Note]
 > The model list is cached on disk for 24 hours. It appears immediately when you open the panel and
@@ -94,7 +98,12 @@ or 30 days. It also shows token usage, which models were used and available mode
 <br />
 <br />
 
-- Shown as red in the bar widget and panel header when your remaining balance is below your set limit.
+- Amber warning glyph and figure in the bar and panel header when your balance
+  is at or below your set limit; red no-entry glyph and figure once it hits zero.
+- One desktop notification each time the balance crosses into the low state —
+  normal urgency when low, critical at zero.
+- An amber banner in the panel puts an ADD CREDITS button next to the warning,
+  and the footer's Credits link is promoted to a filled button.
 - The balance refreshes every 5 minutes by default, or when the panel is opened.
 
 ### Keyboard Navigation
@@ -102,9 +111,13 @@ or 30 days. It also shows token usage, which models were used and available mode
 - Switch tabs by pressing `1`, `2`, `3` or `←`, `→` or `h`, `l`
 - Press `Esc` to close the panel
 - Press `Tab` to move to the next bar panel.
+- Footer links are keyboard-reachable: `Tab` to a button, `Enter` to open it.
+- On the Tokens and Models lists, `PageUp` / `PageDown` / `Home` / `End` scroll
+  once the list has focus (`Tab` moves focus there from the model filter).
 
 > [!Note]
-> When the low-balance threshold field is focused, arrow keys and digits are captured.
+> While the model filter is focused, typing is captured by the field; `Esc`
+> clears it and hands the keys back.
 
 ---
 

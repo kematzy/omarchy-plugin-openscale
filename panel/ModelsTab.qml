@@ -374,6 +374,23 @@ ColumnLayout {
       boundsBehavior: Flickable.StopAtBounds
       model: root.rows
       spacing: 0
+      // Tab can land here from the filter, giving the page keys below a focus
+      // to act on.
+      activeFocusOnTab: true
+
+      // Page keys, so keyboard users get the list without grabbing for the
+      // mouse; anything unrecognised falls through untouched.
+      Keys.onPressed: function(event) {
+        var page = view.height * 0.9
+        if (event.key === Qt.Key_PageDown) view.contentY = Math.min(
+          view.contentHeight - view.height, view.contentY + page)
+        else if (event.key === Qt.Key_PageUp) view.contentY = Math.max(0, view.contentY - page)
+        else if (event.key === Qt.Key_Home) view.contentY = 0
+        else if (event.key === Qt.Key_End) view.contentY = Math.max(
+          0, view.contentHeight - view.height)
+        else return
+        event.accepted = true
+      }
 
       ScrollBar.vertical: ScrollBar {
         policy: view.contentHeight > view.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff

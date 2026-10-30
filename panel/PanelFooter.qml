@@ -55,6 +55,21 @@ ColumnLayout {
         // button looks the same.
         readonly property bool promoted: root.lowCredit && link.modelData.isPrimary === true
 
+        // Keyboard-reachable: Tab lands on the button, Enter/Return clicks it.
+        activeFocusOnTab: true
+
+        // One activation path for mouse and keyboard, so Enter behaves
+        // exactly like a click.
+        function activate() {
+          Util.execArgv(["xdg-open", link.modelData.url])
+        }
+
+        Keys.onReturnPressed: link.activate()
+        Keys.onEnterPressed: link.activate()
+
+        Accessible.role: Accessible.Button
+        Accessible.name: modelData.label + ", opens in browser"
+
         Layout.fillWidth: true
         implicitHeight: Style.space(32)
         // Square buttons, no radius, matching the tab strip.
@@ -70,7 +85,16 @@ ColumnLayout {
           anchors.fill: parent
           cursorShape: Qt.PointingHandCursor
           // execArgv keeps the URL a literal argv entry (no shell re-parsing).
-          onClicked: Util.execArgv(["xdg-open", link.modelData.url])
+          onClicked: link.activate()
+        }
+
+        // Keyboard focus ring, matching the tabs'.
+        Rectangle {
+          anchors.fill: parent
+          visible: link.activeFocus
+          color: "transparent"
+          border.width: 1
+          border.color: root.ui.accent
         }
 
         RowLayout {

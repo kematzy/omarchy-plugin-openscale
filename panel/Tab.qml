@@ -26,12 +26,25 @@ TabButton {
   implicitHeight: Style.space(32)
   implicitWidth: Math.max(Style.space(84), label.implicitWidth + Style.space(24))
 
+  Accessible.role: Accessible.PageTab
+  Accessible.name: root.text
+
   HoverHandler {
     id: hover
   }
 
   background: Rectangle {
     color: hover.hovered && !root.checked ? root.ui.hoverWash : "transparent"
+
+    // Keyboard focus ring — only when focus is not already announced by the
+    // underline on the checked tab.
+    Rectangle {
+      anchors.fill: parent
+      visible: root.activeFocus && !root.checked
+      color: "transparent"
+      border.width: 1
+      border.color: root.ui.accent
+    }
 
     // Active-tab marker. Echoes the bar's own open-widget indicator, so the
     // panel points back at the control that opened it.

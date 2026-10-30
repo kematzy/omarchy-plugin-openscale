@@ -31,7 +31,7 @@ RowLayout {
   // half a second after the figure lands makes the refresh legible.
   readonly property bool spinning: busy || spinnerTail.running
 
-  property url logoSrc: Qt.resolvedUrl("../assets/openscale-logo.svg")
+  property url logoSrc: Qt.resolvedUrl("../assets/openscale-logo-full.svg")
   // Painted height of the lockup; the width follows the asset's aspect ratio.
   property real logoHeight: Style.space(30)
 
@@ -227,6 +227,9 @@ RowLayout {
           font.family: root.ui.fontFamily
           font.pixelSize: Style.font.display
           font.bold: true
+
+          Accessible.role: Accessible.StaticText
+          Accessible.name: root.creditText + " remaining"
 
           Behavior on color {
             ColorAnimation { duration: 160 }
