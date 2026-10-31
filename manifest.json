@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.kematzy.openscale",
   "name": "OpenScale",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "kematzy",
   "license": "MIT",
   "description": "OpenScale credit balance in the bar, with a panel for usage, models and settings.",
