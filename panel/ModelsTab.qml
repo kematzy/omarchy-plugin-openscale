@@ -531,6 +531,16 @@ ColumnLayout {
         }
       }
 
+      HoverHandler { id: rowHover }
+
+      // The name elides before it stops being useful — several variants share
+      // the same first words — so the full name as the catalogue provides it
+      // stays reachable on hover.
+      PanelToolTip {
+        visible: rowHover.hovered
+        text: rowItem.m ? String(rowItem.m.name || rowItem.m.id) : ""
+      }
+
       PanelSeparator {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
