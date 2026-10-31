@@ -89,10 +89,13 @@ BarWidget {
     if (!lowCredit && !noCredit) { notifiedLow = false; return }
     if (notifiedLow) return
     notifiedLow = true
+    // The balance must stay OUT of argv: command lines are world-readable via
+    // /proc/<pid>/cmdline, so any local user could read the account's figure.
+    // The notification announces the state; the amount lives in the bar.
     notifyProcess.command = ["notify-send", "--app-name=OpenScale",
       "--urgency=" + (noCredit ? "critical" : "normal"),
       noCredit ? "OpenScale credit exhausted" : "OpenScale credit is low",
-      creditText + " remaining"]
+      "Open the OpenScale panel to top up"]
     notifyProcess.running = true
   }
 
@@ -271,6 +274,7 @@ BarWidget {
         font.family: button.fontFamily
         font.pixelSize: button.fontSize
         renderType: Text.NativeRendering
+        textFormat: Text.PlainText
         Layout.alignment: Qt.AlignVCenter
       }
     }
