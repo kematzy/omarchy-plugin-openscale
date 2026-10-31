@@ -33,7 +33,7 @@ RowLayout {
 
   property url logoSrc: Qt.resolvedUrl("../assets/openscale-logo-full.svg")
   // Painted height of the lockup; the width follows the asset's aspect ratio.
-  property real logoHeight: Style.space(30)
+  property real logoHeight: Style.space(26)
 
   property var ui: null
 
@@ -42,8 +42,8 @@ RowLayout {
   property real dailyRateUsd: -1
   property real balanceUsd: -1
 
-  // Intrinsic size of assets/openscale-logo.svg (213 x 47).
-  readonly property real logoAspect: 213 / 47
+  // Intrinsic size of assets/openscale-logo-full.svg (650 x 103).
+  readonly property real logoAspect: 650 / 103
   readonly property real logoWidth: Math.round(root.logoHeight * root.logoAspect)
 
   readonly property color amountColor: root.noCredit
@@ -88,6 +88,9 @@ RowLayout {
   Item {
     id: logoColumn
     Layout.alignment: Qt.AlignTop
+    // Breathing room above the lockup, mirrored on the balance column, so
+    // the header does not sit flush against the popup's top edge.
+    Layout.topMargin: Style.space(8)
     implicitWidth: logoContent.implicitWidth
     implicitHeight: logoContent.implicitHeight
 
@@ -100,6 +103,10 @@ RowLayout {
 
       Item {
         id: logoBox
+        // Optical baseline nudge: the amount's ink starts a few pixels inside
+        // its text box, while the mark's ink starts at its own box edge — this
+        // brings the two inks level, and the URL line level with REMAINING.
+        Layout.topMargin: Style.space(4)
         Layout.preferredWidth: root.logoWidth
         Layout.preferredHeight: root.logoHeight
 
@@ -176,6 +183,7 @@ RowLayout {
   Item {
     id: balanceBox
     Layout.alignment: Qt.AlignRight | Qt.AlignTop
+    Layout.topMargin: Style.space(8)
     implicitWidth: balance.implicitWidth
     implicitHeight: balance.implicitHeight
 

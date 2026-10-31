@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell.Io
 import qs.Commons
@@ -198,29 +199,44 @@ BarWidget {
     RowLayout {
       id: content
       anchors.centerIn: parent
-      spacing: Style.space(4)
+      spacing: Style.space(8)
 
-      Image {
+      // The brand mark, recoloured to the bar text so it stops standing out
+      // against the other widgets' icons: the asset is white-on-transparent,
+      // so MultiEffect colorization paints it in one pass, the way the panel
+      // header does its lockup.
+      Item {
         id: mark
-        // Painted size of the brand mark; 2x sourceSize keeps it crisp on
-        // HiDPI outputs. At 14px the full mark's three nested squares blur
-        // into mush, so the simplified variant carries the motif instead.
-        property real paintedSize: Style.space(14)
+        // The bar's icon slot is 16px and the surrounding glyphs carry air
+        // inside their em, so the mark paints a step smaller inside the same
+        // slot instead of filling it edge to edge.
+        readonly property real ink: Style.bar.iconCanvas - Style.space(2) * 2
 
-        source: Qt.resolvedUrl(paintedSize <= 16
-          ? "assets/openscale-mark-small.svg" : "assets/openscale.svg")
-        sourceSize.width: Math.round(paintedSize * 2)
-        sourceSize.height: Math.round(paintedSize * 2)
-        fillMode: Image.PreserveAspectFit
-        Layout.preferredWidth: paintedSize
-        Layout.preferredHeight: paintedSize
+        width: Style.bar.iconCanvas
+        height: Style.bar.iconCanvas
         Layout.alignment: Qt.AlignVCenter
-      }
 
-      TextMetrics {
-        id: amountMetrics
-        font: amountText.font
-        text: "$999.99"
+        Image {
+          id: markTexture
+          anchors.centerIn: parent
+          width: parent.ink
+          height: parent.ink
+          // 2x the painted size so the mark stays crisp on HiDPI outputs.
+          sourceSize.width: Math.round(parent.ink * 2)
+          sourceSize.height: Math.round(parent.ink * 2)
+          source: Qt.resolvedUrl("assets/openscale-logomark.svg")
+          fillMode: Image.PreserveAspectFit
+          // Kept as a hidden layer so the effect below can sample it as a texture.
+          visible: false
+          layer.enabled: true
+        }
+
+        MultiEffect {
+          anchors.fill: markTexture
+          source: markTexture
+          colorization: 1.0
+          colorizationColor: button.foreground
+        }
       }
 
       Text {
@@ -236,17 +252,12 @@ BarWidget {
       }
 
       Text {
-        id: amountText
         text: root.creditText
         color: root.noCredit ? theme.urgent
           : (root.lowCredit ? theme.warning : button.foreground)
         font.family: button.fontFamily
         font.pixelSize: button.fontSize
         renderType: Text.NativeRendering
-        // Never narrower than the widest figure, so the bar does not reflow
-        // between $0.00 and $999.99; the surplus sits on the left.
-        Layout.minimumWidth: amountMetrics.advanceWidth
-        horizontalAlignment: Text.AlignRight
         Layout.alignment: Qt.AlignVCenter
       }
     }
