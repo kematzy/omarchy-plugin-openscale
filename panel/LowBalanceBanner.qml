@@ -11,10 +11,14 @@ Rectangle {
   id: root
 
   property var ui: null
+  // Red once the credit is exhausted, amber while it is merely low — every
+  // colour below keys off this one token.
+  property bool noCredit: false
+  readonly property color attention: root.noCredit ? root.ui.urgent : root.ui.warning
   signal addCreditsRequested()
 
   implicitHeight: Style.space(32)
-  color: Qt.rgba(root.ui.warning.r, root.ui.warning.g, root.ui.warning.b, 0.14)
+  color: Qt.rgba(root.attention.r, root.attention.g, root.attention.b, 0.14)
 
   RowLayout {
     anchors.fill: parent
@@ -24,7 +28,7 @@ Rectangle {
 
     Text {
       text: "\uF071"
-      color: root.ui.warning
+      color: root.attention
       font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
     }
@@ -42,7 +46,7 @@ Rectangle {
       implicitHeight: Style.space(24)
       // Transparent at rest — the amber banner is already the highlight —
       // filled on hover so the click target stays obvious.
-      color: ctaHover.hovered ? root.ui.warning : "transparent"
+      color: ctaHover.hovered ? root.attention : "transparent"
 
       HoverHandler { id: ctaHover }
       MouseArea {
@@ -60,7 +64,7 @@ Rectangle {
         id: cta
         anchors.centerIn: parent
         text: "ADD CREDITS"
-        color: ctaHover.hovered ? root.ui.surface : root.ui.warning
+        color: ctaHover.hovered ? root.ui.surface : root.attention
         font.family: root.ui.fontFamily
         font.pixelSize: Style.font.caption
         font.bold: true

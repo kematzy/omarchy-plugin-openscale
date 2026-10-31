@@ -157,7 +157,9 @@ Panel {
 
         LowBalanceBanner {
           Layout.fillWidth: true
-          visible: root.lowCredit
+          // Low or empty — the top-up job peaks at zero, not vanishes there.
+          visible: root.lowCredit || root.noCredit
+          noCredit: root.noCredit
           ui: theme
           onAddCreditsRequested: Util.execArgv(["xdg-open",
             "https://app.openscale.so/app?credits=open"])
