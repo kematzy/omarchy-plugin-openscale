@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file MD033 -->
 
 <div align="center">
-  <img src="assets/openscale-logo.svg" alt="OpenScale" width="213">
+  <img src="assets/openscale-logo-full.svg" alt="OpenScale" width="297">
 </div>
 
 # OpenScale for Omarchy v4+
@@ -81,6 +81,7 @@ or 30 days. It also shows token usage, which models were used and available mode
   - Input, output, and cached-input prices per 1M tokens
   - A ⚡ mark for fast-serving variants
   - A **NEW** label beside recently added models
+  - Tooltip with the full model name is shown on hover over model name
 - Type in the filter field to narrow the list live; `Esc` clears it.
 
 > [!Note]
@@ -92,7 +93,7 @@ or 30 days. It also shows token usage, which models were used and available mode
 ### Low Balance Notification
 
 <div align="center">
-  <img src=".assets/low-balance-notification.png" alt="OpenScale plugin low balance notification">
+  <img src=".assets/tab-spend-low-balance.png" alt="OpenScale plugin low balance alert">
 </div>
 
 <br />
@@ -184,7 +185,7 @@ omarchy bar set io.github.kematzy.openscale refreshIntervalSec 120 --json
 - **OpenScale data access**
 
   The plugin does not make OpenScale API requests itself; it reads account data through the
-  signed-in `osc` CLI. Clicking **Credits**, **Console**, or **Docs** opens an OpenScale page in
+  signed-in `osc` CLI. Clicking **Credits**, **Dashboard**, or **Docs** opens an OpenScale page in
   your browser.
 
 - **Fixed commands**
