@@ -298,6 +298,7 @@ ColumnLayout {
           font.family: root.ui.fontFamily
           font.pixelSize: Style.font.bodySmall
           font.bold: index === 4
+          textFormat: Text.PlainText
           horizontalAlignment: Text.AlignRight
         }
       }
@@ -342,6 +343,7 @@ ColumnLayout {
       color: root.ui.fg
       font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
+      textFormat: Text.PlainText
       elide: Text.ElideMiddle
     }
 
@@ -353,6 +355,7 @@ ColumnLayout {
       color: root.ui.fg
       font.family: root.ui.fontFamily
       font.pixelSize: Style.font.bodySmall
+      textFormat: Text.PlainText
     }
 
     PanelSeparator {

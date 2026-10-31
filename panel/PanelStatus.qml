@@ -31,6 +31,7 @@ RowLayout {
     color: root.ui.urgent
     font.family: root.ui.fontFamily
     font.pixelSize: Style.font.caption
+    textFormat: Text.PlainText
     elide: Text.ElideRight
   }
 
@@ -42,6 +43,7 @@ RowLayout {
     color: root.ui.caption
     font.family: root.ui.fontFamily
     font.pixelSize: Style.font.caption
+    textFormat: Text.PlainText
     wrapMode: Text.Wrap
     maximumLineCount: 2
     elide: Text.ElideRight
@@ -54,6 +56,7 @@ RowLayout {
     color: root.ui.caption
     font.family: root.ui.fontFamily
     font.pixelSize: Style.font.caption
+    textFormat: Text.PlainText
     // When the legend wraps to two lines the stamp reads as the header of
     // the strip, not as its middle.
     Layout.alignment: Qt.AlignTop

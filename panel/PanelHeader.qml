@@ -235,6 +235,7 @@ RowLayout {
           font.family: root.ui.fontFamily
           font.pixelSize: Style.font.display
           font.bold: true
+          textFormat: Text.PlainText
 
           Accessible.role: Accessible.StaticText
           Accessible.name: root.creditText + " remaining"

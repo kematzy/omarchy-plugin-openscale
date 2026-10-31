@@ -450,6 +450,7 @@ ColumnLayout {
         font.pixelSize: Style.font.caption
         font.bold: true
         font.letterSpacing: 0.8
+        textFormat: Text.PlainText
       }
     }
   }
@@ -473,6 +474,7 @@ ColumnLayout {
           color: root.ui.fg
           font.family: root.ui.fontFamily
           font.pixelSize: Style.font.bodySmall
+          textFormat: Text.PlainText
           elide: Text.ElideRight
         }
 

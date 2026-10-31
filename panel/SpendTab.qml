@@ -195,6 +195,7 @@ ColumnLayout {
         font.family: root.ui.fontFamily
         font.pixelSize: Style.font.title
         font.bold: true
+        textFormat: Text.PlainText
         horizontalAlignment: Text.AlignRight
       }
     }
