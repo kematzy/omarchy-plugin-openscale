@@ -21,10 +21,21 @@ BarWidget {
   id: root
   moduleName: "io.github.kematzy.openscale"
 
+  // ---- Zero-credit demo (hidden dev toggle) ---------------------------------
+  // Forces the exhausted-credit state — $0.00, the red no-entry glyph, urgent
+  // colours and the banner in red — regardless of the live balance. Exists only
+  // in the source: not documented, not in the README. Toggled live through the
+  // bar-settings pipeline, no restart needed:
+  //   omarchy bar set io.github.kematzy.openscale demoZeroCredit true --json
+  //   omarchy bar set io.github.kematzy.openscale demoZeroCredit false --json
+  // The service keeps polling underneath; only what is displayed is masked,
+  // and notifications are silenced so a demo never sends real ones.
+  readonly property bool demoZeroCredit: setting("demoZeroCredit", false) === true
+
   // Real balance, read from the `osc` CLI by Service.qml below. One source for
   // the bar button, the tooltip and the panel.
-  readonly property string creditText: service.creditText
-  readonly property real balanceUsd: service.balanceUsd
+  readonly property string creditText: demoZeroCredit ? "$0.00" : service.creditText
+  readonly property real balanceUsd: demoZeroCredit ? 0 : service.balanceUsd
   readonly property real spent24hUsd: service.spent24hUsd
 
   // Low-credit threshold in dollars, from this widget's inline settings. One
@@ -73,6 +84,8 @@ BarWidget {
   // Both state changes funnel through here, so a poll that flips low → empty
   // still notifies exactly once, at the severity the new state deserves.
   function announceLowState() {
+    // The demo override fabricates a zero balance; never announce fiction.
+    if (demoZeroCredit) return
     if (!lowCredit && !noCredit) { notifiedLow = false; return }
     if (notifiedLow) return
     notifiedLow = true
