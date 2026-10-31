@@ -248,6 +248,8 @@ Copyright [Kematzy](https://github.com/kematzy)
 
 - [**OpenScale**](https://openscale.so) — the models, API, and `osc` CLI this plugin uses.
   Most of the plugin code was created using OpenScale models for assistance.
+- **Trademark** — the OpenScale name, logo, and wordmark are used in this plugin with
+  OpenScale's permission.
 
 - [**Omarchy**](https://omarchy.org) — the desktop, its shell, and the `qs.Ui` component kit used
   to build the panel.
