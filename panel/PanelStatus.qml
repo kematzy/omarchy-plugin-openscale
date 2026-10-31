@@ -17,7 +17,11 @@ RowLayout {
   property double fetchedAt: 0
 
   spacing: Style.space(8)
-  implicitHeight: Style.space(16)
+  // One line when the legend fits. The Models tab's legend carries the price
+  // units note, which would otherwise elide mid-sentence next to the stamp,
+  // so it wraps to a second line instead; the stamp stays centred against
+  // whatever height the strip takes.
+  implicitHeight: Math.max(Style.space(16), legend.implicitHeight)
 
   Text {
     id: errorText
@@ -31,12 +35,15 @@ RowLayout {
   }
 
   Text {
+    id: legend
     Layout.fillWidth: true
     visible: root.error === ""
     text: root.legend
     color: root.ui.caption
     font.family: root.ui.fontFamily
     font.pixelSize: Style.font.caption
+    wrapMode: Text.Wrap
+    maximumLineCount: 2
     elide: Text.ElideRight
   }
 
@@ -47,6 +54,9 @@ RowLayout {
     color: root.ui.caption
     font.family: root.ui.fontFamily
     font.pixelSize: Style.font.caption
+    // When the legend wraps to two lines the stamp reads as the header of
+    // the strip, not as its middle.
+    Layout.alignment: Qt.AlignTop
 
     HoverHandler { id: stampHover }
     PanelToolTip {
