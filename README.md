@@ -124,14 +124,19 @@ or 30 days. It also shows token usage, which models were used and available mode
 
 ## Quick Start
 
-To use the plugin you need to have **OpenScale CLI** installed and be signed in. See the
-[OpenScale Dashboard](https://app.openscale.so/app) for the OpenScale CLI installation instructions.
+The plugin needs the **OpenScale CLI** (`osc`) installed and signed in. The CLI is a third-party
+tool published by OpenScale and is **not** bundled or redistributed by this plugin.
 
-Ensure you are logged in before installing the plugin:
+Install it from the vendor's public release channel — the installer downloads the release archive,
+verifies it against the published SHA-256, and puts `openscale` plus the `osc` alias on your `PATH`:
 
 ```bash
+curl -fsSL https://openscale.so/install | sh
 osc login
 ```
+
+To verify the download yourself first, or to use Homebrew, see
+[Installing the `osc` CLI](#installing-the-osc-cli).
 
 Then install and enable the plugin:
 
@@ -141,6 +146,61 @@ omarchy plugin add https://github.com/kematzy/omarchy-plugin-openscale.git --ena
 
 The widget appears in the right section of the bar, but you can easily move it by clicking and
 dragging.
+
+---
+
+## Installing the `osc` CLI
+
+Reference version: **0.1.7** (current). The plugin only uses long-standing commands and the `--json`
+output contract, so any version that supports them works. `osc version` and `osc doctor` report what
+is actually installed.
+
+| Item              | Public location                                                               |
+| ----------------- | ----------------------------------------------------------------------------- |
+| Installer script  | <https://openscale.so/install>                                                |
+| Release archive   | `https://openscale.so/download/cli/v0.1.7/openscale_0.1.7_<os>_<arch>.tar.gz` |
+| Published digests | `https://openscale.so/download/cli/v0.1.7/checksums.txt`                      |
+| Homebrew tap      | <https://github.com/afgventura/homebrew-tap>                                  |
+
+Supported `<os>_<arch>` values: `linux_amd64`, `linux_arm64`, `darwin_amd64`, `darwin_arm64`
+(Windows builds are also published).
+
+Verify the archive yourself instead of piping the installer:
+
+```bash
+base=https://openscale.so/download/cli/v0.1.7
+curl -fsSLO "$base/openscale_0.1.7_linux_amd64.tar.gz"
+curl -fsSLo checksums.txt "$base/checksums.txt"
+sha256sum -c --ignore-missing checksums.txt   # must print OK
+tar xzf openscale_0.1.7_linux_amd64.tar.gz
+install -m 0755 openscale ~/.local/bin/openscale
+ln -sf openscale ~/.local/bin/osc
+osc version && osc doctor
+```
+
+Or with Homebrew, which installs the same digests through a generated formula:
+
+```bash
+brew install afgventura/tap/openscale
+```
+
+Check the install:
+
+```bash
+osc version   # e.g. openscale 0.1.7
+osc doctor    # sign-in, API reachability, clock skew, agent configs
+```
+
+Notes for reviewers and the curious:
+
+- The CLI is **closed source**; no public repository exists for it. Integrity rests on the vendor's
+  published SHA-256 digests and their installer, which refuses to install on a mismatch.
+- The binary is a static Go executable (no cgo), and its build metadata is inspectable with
+  `go version -m "$(command -v osc)"`.
+- The plugin makes no OpenScale API requests of its own. It shells out to three read-only commands,
+  documented — endpoint and response shape — in **[docs/CLI.md](docs/CLI.md#2-commands-used-by-the-plugin)**.
+- `osc models --json` reads a public, unauthenticated endpoint, so that one command works before
+  signing in; `balance` and `usage` need `osc login`.
 
 ---
 
@@ -261,3 +321,6 @@ Copyright [Kematzy](https://github.com/kematzy)
 
 For architecture, data sources, refresh and caching policies, Omarchy plugin mechanics, and
 development notes, see **[docs/README.md](docs/README.md)**.
+
+For the external `osc` CLI — build metadata, distribution, install/verification, and the exact
+commands and endpoints this plugin depends on — see **[docs/CLI.md](docs/CLI.md)**.

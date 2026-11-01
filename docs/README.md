@@ -359,4 +359,5 @@ If a tab is empty or shows `—`, these are the first things to run: they answer
 - OpenScale API reference (OpenAPI 3.1): <https://openscale.so/openapi.json>
 - OpenScale site: <https://openscale.so> · dashboard: <https://app.openscale.so>
 - CLI help: `osc --help` (every command also takes `--json`)
+- CLI install, version and checksum verification: [CLI.md](CLI.md)
 - Reference plugin: <https://github.com/SpoilHeap/Omarchy.OpenRouter>
